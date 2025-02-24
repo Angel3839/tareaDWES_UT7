@@ -185,8 +185,6 @@ public class MainController {
         return "MensajesForm";
     }
 
-
-
     @GetMapping("/filtrarPorPlanta")
     public String filtrarMensajesPorPlanta(@RequestParam(value = "codigoPlanta", required = false) String codigoPlanta, Model model) {
         List<Mensaje> mensajesFiltradosPorPlanta = new ArrayList<>();
