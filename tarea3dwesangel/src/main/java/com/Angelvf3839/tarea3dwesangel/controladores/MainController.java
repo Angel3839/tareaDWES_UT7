@@ -262,15 +262,12 @@ public class MainController {
         
         return "EjemplaresForm";
     }
-
-
-
     
     /* Método para loguearse */
     @GetMapping("/index")
     public String login(@RequestParam(value = "usuario", defaultValue = "") String usuario, 
                         @RequestParam(value = "password", defaultValue = "") String password, 
-                        Model model) {
+                        Model model, HttpSession session) {
 
         List<Planta> plantas = serviciosPlanta.verTodas();
         model.addAttribute("plantas", plantas);
@@ -281,7 +278,7 @@ public class MainController {
         }
 
         try {
-            boolean autenticado = serviciosCredenciales.autenticar(usuario, password);
+            boolean autenticado = serviciosCredenciales.autenticar(usuario, password, session);
             if (autenticado) {
                 long idUsuario = serviciosPersona.idUsuarioAutenticado(usuario);
                 if (idUsuario == -1) {
@@ -290,17 +287,22 @@ public class MainController {
                     return "index";
                 }
 
+                System.out.println("Verificando si el usuario con ID " + idUsuario + " es cliente...");
+                boolean esCliente = serviciosCliente.esCliente(idUsuario);
+                System.out.println("¿El usuario con ID " + idUsuario + " es cliente?: " + esCliente);
+
                 Perfil perfil;
                 if ("admin".equalsIgnoreCase(usuario)) {
                     perfil = Perfil.ADMIN;
-                } else if (serviciosCliente.esCliente(idUsuario)) {
-                    perfil = Perfil.CLIENTE;
-                } else {
+                } else if (!esCliente) { 
                     perfil = Perfil.PERSONAL;
+                } else {
+                    perfil = Perfil.CLIENTE;
                 }
 
-                controlador.setUsuarioAutenticado(new Sesion(idUsuario, usuario, perfil));
+                session.setAttribute("usuario", new Sesion(idUsuario, usuario, perfil));
                 System.out.println("Sesión iniciada con éxito como: " + usuario);
+                System.out.println("Sesión iniciada con perfil: " + perfil);
 
                 switch (perfil) {
                     case ADMIN:
@@ -318,10 +320,10 @@ public class MainController {
         } catch (Exception e) {
             System.out.println("Error al iniciar sesión: " + e.getMessage());
             model.addAttribute("error", "Error al iniciar sesión: " + e.getMessage());
-            return "index";
+            return "index"; 
         }
-    }
 
+    }
 
 
     @PostMapping("/ejemplares/guardar")
@@ -716,7 +718,7 @@ public class MainController {
 
             Credenciales credenciales = new Credenciales();
             credenciales.setUsuario(usuario);
-            credenciales.setPassword(new BCryptPasswordEncoder().encode(password));
+            credenciales.setPassword(password);
             credenciales.setPersona(persona);
             credenciales.setCliente(nuevoCliente);
 

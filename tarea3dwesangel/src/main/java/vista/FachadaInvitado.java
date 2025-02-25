@@ -59,9 +59,9 @@ public class FachadaInvitado {
                 case 1:
                     verTodasPlantas();
                     break;
-                case 2:
-                    login();
-                    break;
+//                case 2:
+//                    login();
+//                    break;
                 case 3:
                     System.out.println("Saliendo del programa");
                     break;
@@ -76,48 +76,48 @@ public class FachadaInvitado {
         } while (opcion != 3);
     }
 
-    public void login() {
-        in.nextLine();  
-        System.out.print("Introduce el nombre de usuario: ");
-        String usuario = in.nextLine().trim();
-        System.out.print("Introduce la contraseña: ");
-        String contraseña = in.nextLine().trim();
-
-        try {
-            boolean autenticado = servCred.autenticar(usuario, contraseña);
-            if (autenticado) {
-                long idUsuario = servPersona.idUsuarioAutenticado(usuario);
-                if (idUsuario == -1) {
-                    System.out.println("Error al obtener los datos del usuario.");
-                    return;
-                }
-
-                Perfil perfil;
-                if ("admin".equalsIgnoreCase(usuario)) {
-                    perfil = Perfil.ADMIN;
-                } else {
-                    perfil = Perfil.PERSONAL;
-                }
-
-                controlador.setUsuarioAutenticado(new Sesion(idUsuario, usuario, perfil));
-                System.out.println("Sesión iniciada con éxito como: " + usuario);
-
-                if (perfil == Perfil.ADMIN) {
-                    System.out.println("Bienvenido, administrador.");
-                    System.out.println();
-                    fachadaAdmin.menuAdmin();
-                } else if (perfil == Perfil.PERSONAL) {
-                    System.out.println("Bienvenido, personal del vivero.");
-                    System.out.println();
-                    fachadaPersonal.menuPersonal();
-                }
-            } else {
-                System.out.println("Usuario o contraseña incorrectos.");
-            }
-        } catch (Exception e) {
-            System.out.println("Error al iniciar sesión: " + e.getMessage());
-        }
-    }
+//    public void login() {
+//        in.nextLine();  
+//        System.out.print("Introduce el nombre de usuario: ");
+//        String usuario = in.nextLine().trim();
+//        System.out.print("Introduce la contraseña: ");
+//        String contraseña = in.nextLine().trim();
+//
+//        try {
+//            boolean autenticado = servCred.autenticar(usuario, contraseña);
+//            if (autenticado) {
+//                long idUsuario = servPersona.idUsuarioAutenticado(usuario);
+//                if (idUsuario == -1) {
+//                    System.out.println("Error al obtener los datos del usuario.");
+//                    return;
+//                }
+//
+//                Perfil perfil;
+//                if ("admin".equalsIgnoreCase(usuario)) {
+//                    perfil = Perfil.ADMIN;
+//                } else {
+//                    perfil = Perfil.PERSONAL;
+//                }
+//
+//                controlador.setUsuarioAutenticado(new Sesion(idUsuario, usuario, perfil));
+//                System.out.println("Sesión iniciada con éxito como: " + usuario);
+//
+//                if (perfil == Perfil.ADMIN) {
+//                    System.out.println("Bienvenido, administrador.");
+//                    System.out.println();
+//                    fachadaAdmin.menuAdmin();
+//                } else if (perfil == Perfil.PERSONAL) {
+//                    System.out.println("Bienvenido, personal del vivero.");
+//                    System.out.println();
+//                    fachadaPersonal.menuPersonal();
+//                }
+//            } else {
+//                System.out.println("Usuario o contraseña incorrectos.");
+//            }
+//        } catch (Exception e) {
+//            System.out.println("Error al iniciar sesión: " + e.getMessage());
+//        }
+//    }
 
 
     public void verTodasPlantas() {

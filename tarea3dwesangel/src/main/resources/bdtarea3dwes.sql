@@ -18,10 +18,10 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de datos: `bdtarea3dwesleaf`
+-- Base de datos: `bdtarea3dwesut7`
 --
-CREATE DATABASE IF NOT EXISTS `bdtarea3dwesleaf` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-USE `bdtarea3dwesleaf`;
+CREATE DATABASE IF NOT EXISTS `bdtarea3dwesut7` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `bdtarea3dwesut7`;
 
 -- --------------------------------------------------------
 

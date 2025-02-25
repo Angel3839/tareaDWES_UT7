@@ -31,7 +31,8 @@ public class ServiciosCliente {
     }
     
     public boolean esCliente(Long idUsuario) {
-        return clienteRepository.findById(idUsuario).isPresent();
+        Optional<Cliente> cliente = clienteRepository.findByIdPersona(idUsuario);
+        return cliente.isPresent();
     }
 
 }

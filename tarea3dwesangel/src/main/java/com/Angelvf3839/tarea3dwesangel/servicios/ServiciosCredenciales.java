@@ -1,5 +1,7 @@
 package com.Angelvf3839.tarea3dwesangel.servicios;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -7,6 +9,8 @@ import com.Angelvf3839.tarea3dwesangel.modelo.Credenciales;
 import com.Angelvf3839.tarea3dwesangel.modelo.Persona;
 import com.Angelvf3839.tarea3dwesangel.repositorios.CredencialesRepository;
 import com.Angelvf3839.tarea3dwesangel.repositorios.PersonaRepository;
+
+import jakarta.servlet.http.HttpSession;
 
 	
 	@Service
@@ -16,9 +20,47 @@ import com.Angelvf3839.tarea3dwesangel.repositorios.PersonaRepository;
 		
 		@Autowired
 		PersonaRepository personaRepo;
+		
+		@Autowired
+	    private ServiciosCliente serviciosCliente;
 	
-	public boolean autenticar(String usuario, String password) {
-	    return credencialesRepo.verificarCredenciales(usuario, password);
+		public boolean autenticar(String usuario, String password, HttpSession session) {
+	        Optional<Credenciales> credencialesOpt = credencialesRepo.findByUsuario(usuario);
+
+	        if (credencialesOpt.isPresent()) {
+	            Credenciales credenciales = credencialesOpt.get();
+
+	            // Verificar si la contraseña coincide
+	            if (credenciales.getPassword().equals(password)) {
+	                // Guardar datos en sesión
+	                session.setAttribute("idUsuario", credenciales.getPersona().getId());
+	                session.setAttribute("usuario", usuario);
+	                session.setAttribute("perfil", determinarPerfil(credenciales.getPersona().getId()));
+
+	                System.out.println("Sesión iniciada con éxito como: " + usuario);
+	                return true;
+	            }
+	        }
+
+	        System.out.println("Usuario o contraseña incorrectos.");
+	        return false;
+	    }
+
+		private String determinarPerfil(Long idUsuario) {
+		    if (idUsuario == null) {
+		        return "INVITADO";
+		    } else if (idUsuario == 1) { // Suponiendo que el admin tiene id = 1
+		        return "ADMIN";
+		    } else if (serviciosCliente.esCliente(idUsuario)) { // Si el usuario es cliente
+		        return "CLIENTE";
+		    } 
+		    return "PERSONAL"; // Si no es cliente, debe ser personal
+		}
+
+
+
+	    public void cerrarSesion(HttpSession session) {
+	        session.invalidate();
 	    }
 	
 	public boolean usuarioExistente(String usuario) {
