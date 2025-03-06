@@ -1,6 +1,7 @@
 package com.Angelvf3839.tarea3dwesangel.servicios;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.Modifying;
@@ -42,6 +43,11 @@ public class ServiciosPersona {
         Long idPersona = personaRepo.obtenerIdDeUsuario(usuario);
         return (idPersona != null) ? idPersona : -1;
     }
+    
+    public Optional<Persona> obtenerPersonaPorId(Long id) {
+        return personaRepo.findById(id);
+    }
+
     
     public boolean validarPersona(Persona pers) {
         if (pers == null) {

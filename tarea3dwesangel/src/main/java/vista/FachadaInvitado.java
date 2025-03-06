@@ -59,9 +59,9 @@ public class FachadaInvitado {
                 case 1:
                     verTodasPlantas();
                     break;
-//                case 2:
+                case 2:
 //                    login();
-//                    break;
+                    break;
                 case 3:
                     System.out.println("Saliendo del programa");
                     break;

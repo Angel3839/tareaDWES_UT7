@@ -93,6 +93,7 @@
         </div>
     </div>
 
+    <!-- Mostrar mensaje de error -->
     <div class="container d-flex justify-content-center">
         <div th:if="${error}" class="alert alert-danger w-50 text-center" role="alert">
             <span th:text="${error}"></span>
@@ -115,7 +116,7 @@
 					    </div>
 					    <button type="submit" class="btn btn-primary">Entrar</button>
 					</form>
-
+<!-- Botón de Registrar Cliente (extra pequeño) -->
 <a th:href="@{/registroCliente}" class="btn btn-warning btn-xs w-25 mt-3">Registrar Cliente</a>
 					
                 </div>
@@ -123,6 +124,7 @@
         </div>
     </div>
 
+    <!-- Mostrar la lista de plantas -->
     <div class="container d-flex justify-content-center mt-5">
         <div class="col-md-10">
             <div class="table-container">

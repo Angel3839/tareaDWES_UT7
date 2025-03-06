@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vivero - Crear Nuevo Mensaje</title>
 
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/1660/1660438.png">
 
@@ -48,8 +49,22 @@
             border-radius: 12px;
             text-align: center;
             margin-bottom: 20px;
-            display: none;
         }
+        
+        #successAlert {
+    width: 250px; /* Más pequeño */
+    margin: 10px auto; /* Centrado */
+    padding: 6px; /* Espaciado reducido */
+    font-size: 12px; /* Texto más pequeño */
+    text-align: center; /* Centrar el texto */
+    border-radius: 8px; /* Bordes redondeados */
+}
+        
+		.fade-in {
+		    opacity: 1;
+		    transition: opacity 1s ease-in-out;
+		}
+		        
 
         .alert-success {
             background-color: rgba(76, 175, 80, 0.9);
@@ -107,8 +122,17 @@
     <div class="container">
         <h1 class="text-center mb-4">Crear Nuevo Mensaje</h1>
 
-		<div id="successAlert" class="alert alert-success">Mensaje guardado correctamente.</div>
-        <div id="errorAlert" class="alert alert-danger">Error al guardar el mensaje.</div>
+		<!-- Mensaje de éxito cuando se guarda un mensaje correctamente -->
+<div th:if="${success}" id="successAlert" class="alert alert-success">
+    <p th:text="${success}"></p>
+</div>
+		
+<!-- Mensaje de error cuando hay un problema al guardar el mensaje -->
+<div th:if="${error}" id="errorAlert" class="alert alert-danger fade-in">
+    <p th:text="${error}"></p>
+</div>
+
+
 
         <div class="form-container">
             <form th:action="@{/mensajes/guardar}" method="post">
@@ -127,7 +151,7 @@
 
                 <div class="mb-3">
                     <label for="mensajeTexto" class="form-label">Mensaje</label>
-                    <textarea id="mensajeTexto" name="mensajeTexto" class="form-control" rows="4" required></textarea>
+                    <textarea id="mensajeTexto" name="mensajeTexto" class="form-control" rows="4"></textarea>
                 </div>
 
                 <div class="d-flex justify-content-between">
@@ -163,44 +187,52 @@
 
 
 		
-<div class="table-container mt-4">
-    <h2 class="text-center mb-4">Filtrar Mensajes por Rango de Fechas</h2>
-    
-    <form th:action="@{/filtrarPorRangoFechas}" method="get">
-        <div class="row mb-3">
-            <div class="col">
-                <label for="fechaInicio" class="form-label">Fecha Inicio</label>
-                <input type="date" id="fechaInicio" name="fechaInicio" class="form-control" required>
-            </div>
-            <div class="col">
-                <label for="fechaFin" class="form-label">Fecha Fin</label>
-                <input type="date" id="fechaFin" name="fechaFin" class="form-control" required>
-            </div>
-        </div>
-        <button type="submit" class="btn btn-primary">Filtrar</button>
-    </form>
 
-    <table class="table table-hover mt-4">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Fecha</th>
-                <th>Mensaje</th>
-                <th>Persona</th>
-                <th>Ejemplar</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="mensaje : ${mensajesFiltradosPorFecha}">
-                <td th:text="${mensaje.id}"></td>
-                <td th:text="${#temporals.format(mensaje.fechaHora, 'yyyy-MM-dd HH:mm:ss')}"></td>
-                <td th:text="${mensaje.mensaje}"></td>
-                <td th:text="${mensaje.persona.nombre}"></td>
-                <td th:text="${mensaje.ejemplar.nombre}"></td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+        <!-- Filtro de Mensajes por Rango de Fechas -->
+<div class="container">
+        <h1 class="text-center mb-4">Filtrar Mensajes por Rango de Fechas</h1>
+
+        <div class="table-container">
+            <form th:action="@{/filtrarPorRangoFechas}" method="get">
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="fechaInicio" class="form-label">Fecha Inicio</label>
+                        <input type="date" id="fechaInicio" name="fechaInicio" class="form-control" required>
+                    </div>
+                    <div class="col">
+                        <label for="fechaFin" class="form-label">Fecha Fin</label>
+                        <input type="date" id="fechaFin" name="fechaFin" class="form-control" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+            </form>
+        </div>
+
+        <!-- Tabla de resultados de mensajes filtrados por fecha -->
+        <div class="table-container mt-4">
+            <h3 class="text-center mb-3">Mensajes Filtrados por Fecha</h3>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Mensaje</th>
+                        <th>Persona</th>
+                        <th>Ejemplar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="mensaje : ${mensajesFiltradosPorFecha}">
+                        <td th:text="${mensaje.id}"></td>
+                        <td th:text="${#temporals.format(mensaje.fechaHora, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                        <td th:text="${mensaje.mensaje}"></td>
+                        <td th:text="${mensaje.persona.nombre}"></td>
+                        <td th:text="${mensaje.ejemplar.nombre}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
         
 
 
@@ -241,6 +273,9 @@
 </div>
 
 
+
+
+<!-- Filtrar Mensajes por Planta -->
 <div class="table-container mt-4">
     <h2 class="text-center mb-4">Filtrar Mensajes por Planta</h2>
 
@@ -279,18 +314,56 @@
     </table>
 </div>
 
+
+
+
+
+
+
+        
+
     <footer>
         <p>&copy; 2025 Vivero de Ángel. Todos los derechos reservados.</p>
     </footer>
 
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 
+    <!-- JavaScript para filtros -->
     <script>
     function scrollToTable() {
         setTimeout(() => {
             document.getElementById("tablaMensajes").scrollIntoView({ behavior: "smooth" });
-        }, 500);
+        }, 500); // Pequeño retraso para permitir la recarga de la página
     }
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        let successAlert = document.getElementById("successAlert");
+        if (successAlert) {
+            successAlert.style.display = "block"; // Asegura que el mensaje aparezca al cargar la página
+            setTimeout(() => {
+                successAlert.style.transition = "opacity 1s ease-out";
+                successAlert.style.opacity = "0";
+                setTimeout(() => {
+                    successAlert.style.display = "none";
+                }, 1000);
+            }, 8000); // Desaparece después de 8 segundos
+        }
+    });
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        let errorAlert = document.getElementById("errorAlert");
+        if (errorAlert) {
+            errorAlert.style.display = "block";
+            setTimeout(() => {
+                errorAlert.style.transition = "opacity 1s ease-out";
+                errorAlert.style.opacity = "0";
+                setTimeout(() => {
+                    errorAlert.style.display = "none";
+                }, 1000);
+            }, 5000); // Desaparece después de 5 segundos
+        }
+    });
 
     </script>
 </body>

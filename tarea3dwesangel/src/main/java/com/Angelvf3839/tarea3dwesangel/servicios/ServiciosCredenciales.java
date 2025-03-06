@@ -30,9 +30,7 @@ import jakarta.servlet.http.HttpSession;
 	        if (credencialesOpt.isPresent()) {
 	            Credenciales credenciales = credencialesOpt.get();
 
-	            // Verificar si la contraseña coincide
 	            if (credenciales.getPassword().equals(password)) {
-	                // Guardar datos en sesión
 	                session.setAttribute("idUsuario", credenciales.getPersona().getId());
 	                session.setAttribute("usuario", usuario);
 	                session.setAttribute("perfil", determinarPerfil(credenciales.getPersona().getId()));
@@ -49,12 +47,12 @@ import jakarta.servlet.http.HttpSession;
 		private String determinarPerfil(Long idUsuario) {
 		    if (idUsuario == null) {
 		        return "INVITADO";
-		    } else if (idUsuario == 1) { // Suponiendo que el admin tiene id = 1
+		    } else if (idUsuario == 1) {
 		        return "ADMIN";
-		    } else if (serviciosCliente.esCliente(idUsuario)) { // Si el usuario es cliente
+		    } else if (serviciosCliente.esCliente(idUsuario)) {
 		        return "CLIENTE";
 		    } 
-		    return "PERSONAL"; // Si no es cliente, debe ser personal
+		    return "PERSONAL";
 		}
 
 
