@@ -1,5 +1,7 @@
 package com.Angelvf3839.tarea3dwesangel.repositorios;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,4 +18,6 @@ public interface PersonaRepository extends JpaRepository<Persona, Long> {
     Long obtenerIdDeUsuario(@Param("username") String username);
 
     Persona findByNombreContainingIgnoreCase(String nombre);
+    
+    Optional<Persona> findByEmail(String email);
 }

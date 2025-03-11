@@ -50,6 +50,7 @@ import jakarta.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -239,14 +240,16 @@ public class MainController {
                 model.addAttribute("mensajesFiltradosPorFecha", mensajesFiltradosPorFecha);
             }
 
+            model.addAttribute("personas", personaRepository.findAll());
+            model.addAttribute("plantas", plantaRepository.findAll());
+            model.addAttribute("ejemplares", ejemplarRepository.findAll());
+
         } catch (Exception e) {
             model.addAttribute("error", "Error al procesar las fechas.");
         }
 
         return "MensajesForm";
     }
-
-
 
     @GetMapping("/ejemplares/verMensajes")
     public String verMensajesIniciales(@RequestParam Long idEjemplar, Model model) {
@@ -667,7 +670,6 @@ public class MainController {
     }
 
     
-    
     @PostMapping("/personas/guardar")
     public String nuevaPersona(@RequestParam String nombre,
                                @RequestParam String email,
@@ -739,21 +741,55 @@ public class MainController {
     }
     
    
+
     @PostMapping("/clientes/registrar")
-    public String registrarCliente(@RequestParam String nombre,
-                                   @RequestParam String email,
-                                   @RequestParam String usuario,
-                                   @RequestParam String password,
-                                   @RequestParam String nif,
-                                   @RequestParam String direccion,
-                                   @RequestParam String telefono,
-                                   @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fechanac,
+    public String registrarCliente(@RequestParam(required = false) String nombre,
+                                   @RequestParam(required = false) String email,
+                                   @RequestParam(required = false) String usuario,
+                                   @RequestParam(required = false) String password,
+                                   @RequestParam(required = false) String nif,
+                                   @RequestParam(required = false) String direccion,
+                                   @RequestParam(required = false) String telefono,
+                                   @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fechanac,
                                    RedirectAttributes redirectAttributes) {
         try {
+            if ((nombre == null || nombre.isBlank()) && 
+                (email == null || email.isBlank()) &&
+                (usuario == null || usuario.isBlank()) &&
+                (password == null || password.isBlank()) &&
+                (nif == null || nif.isBlank()) &&
+                (direccion == null || direccion.isBlank()) &&
+                (telefono == null || telefono.isBlank()) && 
+                fechanac == null) {
+                
+                redirectAttributes.addFlashAttribute("error", "Error. Rellena el formulario por favor.");
+                return "redirect:/registroCliente";
+            }
+
+            if (personaRepository.findByEmail(email).isPresent()) {
+                redirectAttributes.addFlashAttribute("error", "El email ya está registrado.");
+                return "redirect:/registroCliente";
+            }
+
+            if (credencialesRepository.findByUsuario(usuario).isPresent()) {
+                redirectAttributes.addFlashAttribute("error", "El usuario ya está registrado.");
+                return "redirect:/registroCliente";
+            }
+
+            if (!serviciosCliente.validarNombre(nombre) ||
+                !serviciosCliente.validarEmail(email) ||
+                !serviciosCliente.validarUsuario(usuario) ||
+                !serviciosCliente.validarContraseña(password) ||
+                !serviciosCliente.validarNIF(nif) ||
+                !serviciosCliente.validarTelefono(telefono)) {
+                redirectAttributes.addFlashAttribute("error", "Datos inválidos, revise el formulario.");
+                return "redirect:/registroCliente";
+            }
+
             Persona persona = new Persona();
             persona.setNombre(nombre);
             persona.setEmail(email);
-            persona = serviciosPersona.guardarPersona(persona); 
+            persona = serviciosPersona.guardarPersona(persona);
 
             Cliente nuevoCliente = new Cliente();
             nuevoCliente.setNombre(nombre);
@@ -764,28 +800,31 @@ public class MainController {
             nuevoCliente.setFechanac(fechanac);
             nuevoCliente.setPersona(persona);
 
-            nuevoCliente = serviciosCliente.guardarCliente(nuevoCliente);
-
             Credenciales credenciales = new Credenciales();
             credenciales.setUsuario(usuario);
             credenciales.setPassword(password);
             credenciales.setPersona(persona);
-            credenciales.setCliente(nuevoCliente);
 
             persona.setCredenciales(credenciales);
-            nuevoCliente.setCredenciales(credenciales);
-
             credenciales = credencialesRepository.save(credenciales);
 
+            nuevoCliente.setCredenciales(credenciales);
+            credenciales.setCliente(nuevoCliente);
+
+            nuevoCliente = serviciosCliente.guardarCliente(nuevoCliente);
+            credencialesRepository.save(credenciales);
+
             redirectAttributes.addFlashAttribute("success", "Cliente registrado exitosamente.");
-            return "redirect:/registroCliente?success=true";
+            return "redirect:/registroCliente";
+
+        } catch (DataIntegrityViolationException e) {
+            redirectAttributes.addFlashAttribute("error", "El email o usuario ya están en uso.");
+            return "redirect:/registroCliente";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error al registrar el cliente: " + e.getMessage());
-            return "redirect:/registroCliente?error=true";
+            redirectAttributes.addFlashAttribute("error", "Error inesperado: " + e.getMessage());
+            return "redirect:/registroCliente";
         }
     }
-
-
 
 
     @GetMapping("/registroCliente")
@@ -995,7 +1034,15 @@ public class MainController {
     }
 
     @GetMapping("/ejemplares/stock")
-    public String verStockEjemplares(@RequestParam("codigoPlanta") String codigoPlanta, Model model) {
+    public String verStockEjemplares(@RequestParam(value = "codigoPlanta", required = false) String codigoPlanta, Model model) {
+        List<Planta> plantas = plantaRepository.findAll();
+        model.addAttribute("plantas", plantas);
+
+        if (codigoPlanta == null || codigoPlanta.isEmpty()) {
+            model.addAttribute("error", "Seleccione una planta.");
+            return "stockEjemplares";
+        }
+
         Optional<Planta> plantaOptional = plantaRepository.findByCodigo(codigoPlanta);
         
         if (plantaOptional.isEmpty()) {
@@ -1015,11 +1062,13 @@ public class MainController {
                 .collect(Collectors.toList());
 
         model.addAttribute("planta", planta);
+        model.addAttribute("codigoPlanta", codigoPlanta);
         model.addAttribute("ejemplaresDisponibles", ejemplaresDisponibles);
         model.addAttribute("ejemplaresNoDisponibles", ejemplaresNoDisponibles);
 
         return "stockEjemplares";
     }
+
 
 
     
