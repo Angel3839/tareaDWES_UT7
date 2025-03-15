@@ -6,6 +6,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -141,10 +142,10 @@ public class MainController {
     }
     
     @GetMapping("/cerrarSesion")
-    public String cerrarSesion() {
-        controlador.setUsuarioAutenticado(null);
+    public String cerrarSesion(HttpSession session) {
+        session.invalidate();
         System.out.println("Sesión cerrada correctamente.");
-        return "redirect:/"; 
+        return "redirect:/";
     }
 
     
@@ -276,7 +277,6 @@ public class MainController {
 
 
     
-    /* Método para loguearse */
     @GetMapping("/index")
     public String login(@RequestParam(value = "usuario", defaultValue = "") String usuario, 
                         @RequestParam(value = "password", defaultValue = "") String password, 
@@ -322,7 +322,8 @@ public class MainController {
                     }
                 }
 
-                session.setAttribute("usuario", new Sesion(idUsuario, usuario, perfil));
+                Sesion sesionUsuario = new Sesion(idUsuario, usuario, perfil);
+                session.setAttribute("usuario", sesionUsuario);
                 session.setAttribute("tiempoInicio", System.currentTimeMillis());
 
                 if (perfil == Perfil.CLIENTE && cliente != null) {
@@ -332,16 +333,28 @@ public class MainController {
                     System.out.println("No se guardó el cliente en la sesión.");
                 }
 
+                Sesion sesionDebug = (Sesion) session.getAttribute("usuario");
+                if (sesionDebug != null) {
+                    System.out.println("Sesión activa después del login:");
+                    System.out.println("Usuario: " + sesionDebug.getUsuarioAutenticado());
+                    System.out.println("Perfil: " + sesionDebug.getPerfilusuarioAutenticado());
+                } else {
+                    System.out.println("ERROR: No se guardó la sesión correctamente.");
+                }
+
                 System.out.println("Sesión iniciada con éxito como: " + usuario);
                 System.out.println("Sesión iniciada con perfil: " + perfil);
 
                 switch (perfil) {
                     case ADMIN:
                         return "redirect:/menuAdmin";
+                    case PERSONAL:
+                        return "redirect:/menuPersonal";
                     case CLIENTE:
                         return "redirect:/menuCliente";
                     default:
-                        return "redirect:/menuPersonal";
+                        System.out.println("ERROR: Perfil no reconocido. Redirigiendo a index.");
+                        return "redirect:/index";
                 }
             } else {
                 System.out.println("Usuario o contraseña incorrectos.");
@@ -356,7 +369,7 @@ public class MainController {
     }
 
 
-    
+
     @PostMapping("/ejemplares/guardar")
     public String guardarEjemplar(@RequestParam String codigoPlanta, HttpSession session, RedirectAttributes redirectAttributes) {
         System.out.println("MÉTODO guardarEjemplar EJECUTADO");
@@ -364,7 +377,7 @@ public class MainController {
         Sesion sesionActual = (Sesion) session.getAttribute("usuario");
 
         if (sesionActual == null) {
-            System.out.println("ERROR: No hay una sesión activa.");
+            System.out.println("ERROR: No hay una sesión activa o la sesión ha expirado.");
             redirectAttributes.addFlashAttribute("error", "Debes iniciar sesión para registrar un ejemplar.");
             return "redirect:/EjemplaresForm?error=true";
         }
@@ -420,6 +433,9 @@ public class MainController {
         redirectAttributes.addFlashAttribute("success", "Ejemplar y mensaje inicial guardados con éxito.");
         return "redirect:/EjemplaresForm?success=true";
     }
+
+
+
 
 
     @GetMapping("/ejemplares/filtrar")
@@ -927,8 +943,8 @@ public class MainController {
         redirectAttributes.addFlashAttribute("success", "Pedido realizado con éxito.");
         return "redirect:/menuCliente";
     }
-
-@GetMapping("/carrito")
+    
+    @GetMapping("/carrito")
     public String verCarrito(Model model, HttpSession session, RedirectAttributes redirectAttributes) {
         System.out.println("MÉTODO verCarrito EJECUTADO");
 
@@ -1068,8 +1084,5 @@ public class MainController {
 
         return "stockEjemplares";
     }
-
-
-
     
 }

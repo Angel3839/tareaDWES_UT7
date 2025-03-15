@@ -16,7 +16,6 @@ public class Tarea3dwesangelApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(Tarea3dwesangelApplication.class, args);
 	}
-
 	
 	
 }

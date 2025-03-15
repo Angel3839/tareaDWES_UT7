@@ -44,7 +44,7 @@ import jakarta.servlet.http.HttpSession;
 	        return false;
 	    }
 
-		private String determinarPerfil(Long idUsuario) {
+		public String determinarPerfil(Long idUsuario) {
 		    if (idUsuario == null) {
 		        return "INVITADO";
 		    } else if (idUsuario == 1) {

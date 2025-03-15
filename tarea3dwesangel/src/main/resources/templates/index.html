@@ -104,19 +104,21 @@
             <div class="card text-center">
                 <div class="card-body">
                     <h5 class="card-title">Iniciar Sesión</h5>
-                    <form th:action="@{/index}" method="get">
+                    <form th:action="@{/login}" method="post">
 					    <div class="mb-3">
-					        <label for="usuario" class="form-label">Usuario</label>
-					        <input type="text" class="form-control" id="usuario" name="usuario">
+					        <label for="username" class="form-label">Usuario</label>
+					        <input type="text" class="form-control" id="username" name="username" required>
 					    </div>
 					    <div class="mb-3">
 					        <label for="password" class="form-label">Contraseña</label>
-					        <input type="password" class="form-control" id="password" name="password">
+					        <input type="password" class="form-control" id="password" name="password" required>
 					    </div>
 					    <button type="submit" class="btn btn-primary">Entrar</button>
 					</form>
-<!-- Botón de Registrar Cliente (extra pequeño) -->
-<a th:href="@{/registroCliente}" class="btn btn-warning btn-xs w-25 mt-3">Registrar Cliente</a>
+					
+					<!-- Botón para registrar un cliente -->
+					<a th:href="@{/registroCliente}" class="btn btn-warning btn-xs w-25 mt-3">Registrar Cliente</a>
+                    
 					
                 </div>
             </div>
