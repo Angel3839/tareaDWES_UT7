@@ -112,27 +112,27 @@
 
         <div class="form-container">
             <h3 class="text-center mb-3">Agregar Nueva Planta</h3>
-            <form th:action="@{/plantas/guardar}" method="post">
-                <div class="mb-3">
-                    <label for="codigo" class="form-label">Código</label>
-                    <input type="text" id="codigo" name="codigo" class="form-control" th:value="${planta.codigo}" required>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="nombreComun" class="form-label">Nombre Común</label>
-                    <input type="text" id="nombreComun" name="nombreComun" class="form-control" th:value="${planta.nombreComun}" required>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="nombreCientifico" class="form-label">Nombre Científico</label>
-                    <input type="text" id="nombreCientifico" name="nombreCientifico" class="form-control" th:value="${planta.nombreCientifico}" required>
-                </div>
-                
-                <div class="d-flex justify-content-between">
-                    <button type="submit" class="btn btn-primary">Guardar</button>
-                    <a th:href="@{/plantas}" class="btn btn-secondary">Cancelar</a>
-                </div>
-            </form>
+            <form th:action="@{/plantas/guardar}" method="post" onsubmit="return validarFormulario();">
+			    <div class="mb-3">
+			        <label for="codigo" class="form-label">Código</label>
+			        <input type="text" id="codigo" name="codigo" class="form-control">
+			    </div>
+			    <div class="mb-3">
+			        <label for="nombreComun" class="form-label">Nombre Común</label>
+			        <input type="text" id="nombreComun" name="nombreComun" class="form-control">
+			    </div>
+			    <div class="mb-3">
+			        <label for="nombreCientifico" class="form-label">Nombre Científico</label>
+			        <input type="text" id="nombreCientifico" name="nombreCientifico" class="form-control">
+			    </div>
+			
+			    <p id="errorMsg" class="text-danger" style="display: none;">Debes completar al menos un campo antes de guardar.</p>
+			
+			    <div class="d-flex justify-content-between">
+			        <button type="submit" class="btn btn-primary">Guardar</button>
+			        <a href="/volverMenu" class="btn btn-secondary">Volver</a>
+			    </div>
+			</form>
             
             <div id="successAlert" class="alert-success mt-3">Planta insertada correctamente.</div>
             <div id="errorAlert" class="alert-error mt-3">Error al insertar la planta.</div>
@@ -160,46 +160,40 @@
 
         <div class="form-container mt-4">
             <h3 class="text-center mb-3">Modificar Nombre Común</h3>
-            <form th:action="@{/plantas/modificarNombre}" method="post">
+            <form th:action="@{/plantas/modificarNombre}" method="post" onsubmit="return validarModificacion('codigoPlanta', 'nuevoNombreComun', 'errorMsgComun');">
                 <div class="mb-3">
                     <label for="codigoPlanta" class="form-label">Seleccionar Planta</label>
-                    <select id="codigoPlanta" name="codigo" class="form-select" required>
+                    <select id="codigoPlanta" name="codigo" class="form-select">
                         <option value="">Seleccione una planta</option>
                         <option th:each="planta : ${plantas}" th:value="${planta.codigo}" th:text="${planta.codigo}"></option>
                     </select>
                 </div>
-
                 <div class="mb-3">
                     <label for="nuevoNombreComun" class="form-label">Nuevo Nombre Común</label>
-                    <input type="text" id="nuevoNombreComun" name="nuevoNombreComun" class="form-control" required>
+                    <input type="text" id="nuevoNombreComun" name="nuevoNombreComun" class="form-control">
                 </div>
-                
-                <div class="d-flex justify-content-between">
-                    <button type="submit" class="btn btn-warning">Actualizar</button>
-                </div>
+                <p id="errorMsgComun" class="text-danger" style="display: none;">⚠️ Debes seleccionar una planta y escribir un nuevo nombre común.</p>
+                <button type="submit" class="btn btn-warning">Actualizar</button>
             </form>
         </div>
         
 		<div class="form-container mt-4">
 		    <h3 class="text-center mb-3">Modificar Nombre Científico</h3>
-		    <form th:action="@{/plantas/modificarNombreCientifico}" method="post">
-		        <div class="mb-3">
-		            <label for="codigoPlantaCientifico" class="form-label">Seleccionar Planta</label>
-		            <select id="codigoPlantaCientifico" name="codigo" class="form-select" required>
-		                <option value="">Seleccione una planta</option>
-		                <option th:each="planta : ${plantas}" th:value="${planta.codigo}" th:text="${planta.codigo}"></option>
-		            </select>
-		        </div>
-		
-		        <div class="mb-3">
-		            <label for="nuevoNombreCientifico" class="form-label">Nuevo Nombre Científico</label>
-		            <input type="text" id="nuevoNombreCientifico" name="nuevoNombreCientifico" class="form-control" required>
-		        </div>
-		
-		        <div class="d-flex justify-content-between">
-		            <button type="submit" class="btn btn-warning">Actualizar</button>
-		        </div>
-		    </form>
+		    <form th:action="@{/plantas/modificarNombreCientifico}" method="post" onsubmit="return validarModificacion('codigoPlantaCientifico', 'nuevoNombreCientifico', 'errorMsgCientifico');">
+                <div class="mb-3">
+                    <label for="codigoPlantaCientifico" class="form-label">Seleccionar Planta</label>
+                    <select id="codigoPlantaCientifico" name="codigo" class="form-select">
+                        <option value="">Seleccione una planta</option>
+                        <option th:each="planta : ${plantas}" th:value="${planta.codigo}" th:text="${planta.codigo}"></option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="nuevoNombreCientifico" class="form-label">Nuevo Nombre Científico</label>
+                    <input type="text" id="nuevoNombreCientifico" name="nuevoNombreCientifico" class="form-control">
+                </div>
+                <p id="errorMsgCientifico" class="text-danger" style="display: none;">⚠️ Debes seleccionar una planta y escribir un nuevo nombre científico.</p>
+                <button type="submit" class="btn btn-warning">Actualizar</button>
+            </form>
 		</div>
         
     </div>
@@ -230,6 +224,35 @@
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     };
+    
+    function validarFormulario() {
+        let codigo = document.getElementById("codigo").value.trim();
+        let nombreComun = document.getElementById("nombreComun").value.trim();
+        let nombreCientifico = document.getElementById("nombreCientifico").value.trim();
+        let errorMsg = document.getElementById("errorMsg");
+
+        if (codigo === "" && nombreComun === "" && nombreCientifico === "") {
+            errorMsg.style.display = "block";
+            return false;
+        }
+
+        errorMsg.style.display = "none";
+        return true;
+    }
+    
+    function validarModificacion(selectId, inputId, errorId) {
+        let selectPlanta = document.getElementById(selectId).value.trim();
+        let nuevoNombre = document.getElementById(inputId).value.trim();
+        let errorMsg = document.getElementById(errorId);
+        
+        if (selectPlanta === "" || nuevoNombre === "") {
+            errorMsg.style.display = "block";
+            return false;
+        }
+        
+        errorMsg.style.display = "none";
+        return true;
+    }
     </script>
 </body>
 </html>

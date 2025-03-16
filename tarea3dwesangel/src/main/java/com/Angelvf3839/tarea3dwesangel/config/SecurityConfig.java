@@ -34,7 +34,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/index", "/registroCliente").permitAll()
+                .requestMatchers("/", "/index", "/registroCliente", "/clientes/registrar").permitAll()
                 .requestMatchers("/menuCliente", "/realizarPedido", "/carrito").hasRole("CLIENTE")
                 .requestMatchers("/menuAdmin", "/gestionUsuarios").hasRole("ADMIN")
                 .requestMatchers("/menuPersonal", "/gestionarEjemplares", "/gestionarMensajes").hasRole("PERSONAL")
@@ -46,25 +46,21 @@ public class SecurityConfig {
                 .successHandler((request, response, authentication) -> {
                     String username = authentication.getName();
                     
-                    // Buscar el usuario en la base de datos
                     Credenciales credenciales = credencialesRepository.findByUsuario(username).orElse(null);
                     if (credenciales == null) {
                         response.sendRedirect("/index?error=UsuarioNoEncontrado");
                         return;
                     }
                     
-                    // Determinar el perfil desde ServiciosCredenciales
                     Long idPersona = credenciales.getPersona().getId();
                     String role = serviciosCredenciales.determinarPerfil(idPersona);
                     
                     Perfil perfil = Perfil.valueOf(role);
                     
-                    // Guardar usuario en sesión
                     HttpSession session = request.getSession();
                     session.setAttribute("usuario", new Sesion(idPersona, username, perfil));
                     session.setAttribute("tiempoInicio", System.currentTimeMillis());
                     
-                    // Redireccionar según el rol
                     switch (perfil) {
                         case ADMIN:
                             response.sendRedirect("/menuAdmin");

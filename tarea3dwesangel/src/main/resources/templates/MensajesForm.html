@@ -132,30 +132,30 @@
 
 
         <div class="form-container">
-            <form th:action="@{/mensajes/guardar}" method="post">
-                <div class="mb-3">
-				    <label for="idEjemplar" class="form-label">Seleccionar Ejemplar</label>
-				    <select id="idEjemplar" name="idEjemplar" class="form-select" required>
-    <option value="">Seleccione un ejemplar</option>
-    <option th:each="ejemplar : ${ejemplares}" 
-            th:value="${ejemplar.id}" 
-            th:text="${ejemplar.nombre}">
-    </option>
-</select>
-				    
-				    
-				</div>
+            <form th:action="@{/mensajes/guardar}" method="post" onsubmit="return validarSeleccionEjemplar();">
+        <div class="mb-3">
+            <label for="idEjemplar" class="form-label">Seleccionar Ejemplar</label>
+            <select id="idEjemplar" name="idEjemplar" class="form-select">
+                <option value="">Seleccione un ejemplar</option>
+                <option th:each="ejemplar : ${ejemplares}" th:value="${ejemplar.id}" th:text="${ejemplar.nombre}"></option>
+            </select>
+        </div>
 
-                <div class="mb-3">
-                    <label for="mensajeTexto" class="form-label">Mensaje</label>
-                    <textarea id="mensajeTexto" name="mensajeTexto" class="form-control" rows="4"></textarea>
-                </div>
+        <!-- Mensaje de error si no se selecciona un ejemplar -->
+        <p id="errorEjemplarSeleccion" class="text-danger text-center" style="display: none;">
+            Debe seleccionar un ejemplar antes de guardar el mensaje.
+        </p>
 
-                <div class="d-flex justify-content-between">
-                    <button type="submit" class="btn btn-primary">Guardar</button>
-                    <a th:href="@{/mensajes}" class="btn btn-secondary">Cancelar</a>
-                </div>
-            </form>
+        <div class="mb-3">
+            <label for="mensajeTexto" class="form-label">Mensaje</label>
+            <textarea id="mensajeTexto" name="mensajeTexto" class="form-control" rows="4"></textarea>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a href="/volverMenu" class="btn btn-secondary">Volver</a>
+        </div>
+    </form>
         </div>
 
 <div class="table-container mt-4">
@@ -186,7 +186,7 @@
 <div class="table-container mt-4">
     <h2 class="text-center mb-4">Filtrar Mensajes por Rango de Fechas</h2>
 
-    <form th:action="@{/filtrarPorRangoFechas}" method="get">
+    <form th:action="@{/filtrarPorRangoFechas}" method="get" onsubmit="return validarSeleccionFechas();">
         <div class="row mb-3">
             <div class="col">
                 <label for="fechaInicio" class="form-label">Fecha Inicio</label>
@@ -197,6 +197,12 @@
                 <input type="date" id="fechaFin" name="fechaFin" class="form-control">
             </div>
         </div>
+
+        <!-- Mensaje de error si no se seleccionan ambas fechas -->
+        <p id="errorFechaSeleccion" class="text-danger text-center" style="display: none;">
+            Debe seleccionar ambas fechas antes de filtrar.
+        </p>
+
         <button type="submit" class="btn btn-primary">Filtrar</button>
     </form>
 
@@ -228,16 +234,21 @@
 <div class="table-container mt-4">
     <h2 class="text-center mb-4">Filtrar Mensajes por Persona</h2>
     
-    <form th:action="@{/filtrarPorPersona}" method="get">
-        <div class="mb-3">
-            <label for="personaFiltro" class="form-label">Seleccionar Persona</label>
-            <select id="personaFiltro" name="idPersona" class="form-select" required>
-                <option value="">Seleccione una persona</option>
-                <option th:each="persona : ${personas}" th:value="${persona.id}" th:text="${persona.nombre}"></option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Filtrar</button>
-    </form>
+    <form th:action="@{/filtrarPorPersona}" method="get" onsubmit="return validarSeleccionPersona();">
+    <div class="mb-3">
+        <label for="personaFiltro" class="form-label">Seleccionar Persona</label>
+        <select id="personaFiltro" name="idPersona" class="form-select">
+            <option value="">Seleccione una persona</option>
+            <option th:each="persona : ${personas}" th:value="${persona.id}" th:text="${persona.nombre}"></option>
+        </select>
+    </div>
+
+    <!-- Mensaje de error si no se selecciona una persona -->
+    <p id="errorPersonaSeleccion" class="text-danger" style="display: none;">Debe seleccionar una persona antes de filtrar.</p>
+
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+</form>
+    
 
     <table class="table table-hover mt-4">
         <thead>
@@ -265,17 +276,20 @@
 <div class="table-container mt-4">
     <h2 class="text-center mb-4">Filtrar Mensajes por Planta</h2>
 
-    <form th:action="@{/filtrarPorPlanta}" method="get">
+    <form th:action="@{/filtrarPorPlanta}" method="get" onsubmit="return validarSeleccionPlanta();">
         <div class="mb-3">
             <label for="plantaFiltro" class="form-label">Seleccionar Planta</label>
-            <select id="plantaFiltro" name="codigoPlanta" class="form-select" required>
+            <select id="plantaFiltro" name="codigoPlanta" class="form-select">
                 <option value="">Seleccione una planta</option>
                 <option th:each="planta : ${plantas}" th:value="${planta.codigo}" th:text="${planta.codigo}"></option>
             </select>
         </div>
+
+        <!-- Mensaje de error si no se selecciona una planta -->
+        <p id="errorPlantaSeleccion" class="text-danger" style="display: none;">Debe seleccionar una planta antes de filtrar.</p>
+
         <button type="submit" class="btn btn-success">Filtrar</button>
     </form>
-
     <table class="table table-hover mt-4">
         <thead>
             <tr>
@@ -342,6 +356,58 @@
         }
     });
 
+    function validarSeleccionPersona() {
+        let selectPersona = document.getElementById("personaFiltro");
+        let errorMsg = document.getElementById("errorPersonaSeleccion");
+
+        if (selectPersona.value === "") {
+            errorMsg.style.display = "block";
+            return false;
+        }
+
+        errorMsg.style.display = "none";
+        return true;
+    }
+    
+    function validarSeleccionPlanta() {
+        let selectPlanta = document.getElementById("plantaFiltro");
+        let errorMsg = document.getElementById("errorPlantaSeleccion");
+
+        if (selectPlanta.value === "") {
+            errorMsg.style.display = "block";
+            return false;
+        }
+
+        errorMsg.style.display = "none";
+        return true;
+    }
+    
+    function validarSeleccionFechas() {
+        let fechaInicio = document.getElementById("fechaInicio").value;
+        let fechaFin = document.getElementById("fechaFin").value;
+        let errorMsg = document.getElementById("errorFechaSeleccion");
+
+        if (fechaInicio === "" || fechaFin === "") {
+            errorMsg.style.display = "block";
+            return false;
+        }
+
+        errorMsg.style.display = "none";
+        return true;
+    }
+    
+    function validarSeleccionEjemplar() {
+        let selectEjemplar = document.getElementById("idEjemplar");
+        let errorMsg = document.getElementById("errorEjemplarSeleccion");
+
+        if (selectEjemplar.value === "") {
+            errorMsg.style.display = "block";
+            return false;
+        }
+
+        errorMsg.style.display = "none";
+        return true;
+    }
     </script>
 </body>
 </html>

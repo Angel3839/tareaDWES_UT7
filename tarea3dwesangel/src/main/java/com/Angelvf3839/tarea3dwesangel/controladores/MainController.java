@@ -175,10 +175,12 @@ public class MainController {
     
 
     @GetMapping("/filtrarPorPersona")
-    public String filtrarMensajesPorPersona(@RequestParam("idPersona") Long idPersona, Model model) {
+    public String filtrarMensajesPorPersona(@RequestParam(value = "idPersona", required = false) Long idPersona, 
+                                            Model model, 
+                                            RedirectAttributes redirectAttributes) {
         if (idPersona == null) {
-            model.addAttribute("error", "Debe seleccionar una persona válida.");
-            return "MensajesForm";
+            redirectAttributes.addFlashAttribute("errorSeleccion", "Debe seleccionar una persona antes de filtrar.");
+            return "redirect:/MensajesForm";
         }
 
         List<Mensaje> mensajesFiltradosPorPersona = mensajesRepository.buscarPorPersona(idPersona);
@@ -197,6 +199,7 @@ public class MainController {
         
         return "MensajesForm";
     }
+
 
 
 
@@ -253,9 +256,14 @@ public class MainController {
     }
 
     @GetMapping("/ejemplares/verMensajes")
-    public String verMensajesIniciales(@RequestParam Long idEjemplar, Model model) {
+    public String verMensajesIniciales(@RequestParam(value = "idEjemplar", required = false) Long idEjemplar, Model model, RedirectAttributes redirectAttributes) {
+        if (idEjemplar == null) {
+            redirectAttributes.addFlashAttribute("errorSeleccion", "Debe seleccionar un ejemplar antes de ver los mensajes.");
+            return "redirect:/EjemplaresForm";
+        }
+
         System.out.println("ID del ejemplar seleccionado: " + idEjemplar); 
-        
+
         Ejemplar ejemplar = ejemplarRepository.findById(idEjemplar).orElse(null);
         
         if (ejemplar != null) {
@@ -263,7 +271,7 @@ public class MainController {
             System.out.println("Mensajes encontrados: " + mensajesIniciales.size()); 
             model.addAttribute("mensajesIniciales", mensajesIniciales);
         } else {
-            model.addAttribute("error", "No se encontró el ejemplar seleccionado.");
+            model.addAttribute("errorSeleccion", "No se encontró el ejemplar seleccionado.");
         }
 
         List<Ejemplar> listaEjemplares = ejemplarRepository.findAll();
@@ -273,6 +281,7 @@ public class MainController {
         
         return "EjemplaresForm";
     }
+
 
 
 
@@ -439,10 +448,14 @@ public class MainController {
 
 
     @GetMapping("/ejemplares/filtrar")
-    public String filtrarEjemplaresPorPlanta(@RequestParam("codigoPlantas") List<String> codigosPlantas, Model model) {
+    public String filtrarEjemplaresPorPlanta(
+            @RequestParam(value = "codigoPlantas", required = false) List<String> codigosPlantas,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        
         if (codigosPlantas == null || codigosPlantas.isEmpty()) {
-            model.addAttribute("error", "Debe seleccionar al menos una planta.");
-            return "EjemplaresForm";
+            redirectAttributes.addFlashAttribute("errorSeleccion", "Debe seleccionar al menos una planta antes de filtrar.");
+            return "redirect:/EjemplaresForm";
         }
 
         List<Ejemplar> ejemplaresFiltrados = ejemplarRepository.findByPlantaCodigoIn(codigosPlantas);
@@ -458,8 +471,6 @@ public class MainController {
     }
 
 
-
-    
     @GetMapping("/verEjemplares")
     public String verEjemplares(Model model) {
         List<Ejemplar> listaEjemplares = ejemplarRepository.findAll();
@@ -769,25 +780,30 @@ public class MainController {
                                    @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fechanac,
                                    RedirectAttributes redirectAttributes) {
         try {
-            if ((nombre == null || nombre.isBlank()) && 
-                (email == null || email.isBlank()) &&
-                (usuario == null || usuario.isBlank()) &&
-                (password == null || password.isBlank()) &&
-                (nif == null || nif.isBlank()) &&
-                (direccion == null || direccion.isBlank()) &&
-                (telefono == null || telefono.isBlank()) && 
+            System.out.println("Intentando registrar cliente...");
+
+            if ((nombre == null || nombre.isBlank()) || 
+                (email == null || email.isBlank()) ||
+                (usuario == null || usuario.isBlank()) ||
+                (password == null || password.isBlank()) ||
+                (nif == null || nif.isBlank()) ||
+                (direccion == null || direccion.isBlank()) ||
+                (telefono == null || telefono.isBlank()) || 
                 fechanac == null) {
-                
+
+                System.out.println("Error: Algunos campos están vacíos.");
                 redirectAttributes.addFlashAttribute("error", "Error. Rellena el formulario por favor.");
                 return "redirect:/registroCliente";
             }
 
             if (personaRepository.findByEmail(email).isPresent()) {
+                System.out.println("Error: El email ya está registrado.");
                 redirectAttributes.addFlashAttribute("error", "El email ya está registrado.");
                 return "redirect:/registroCliente";
             }
 
             if (credencialesRepository.findByUsuario(usuario).isPresent()) {
+                System.out.println("Error: El usuario ya está registrado.");
                 redirectAttributes.addFlashAttribute("error", "El usuario ya está registrado.");
                 return "redirect:/registroCliente";
             }
@@ -798,6 +814,8 @@ public class MainController {
                 !serviciosCliente.validarContraseña(password) ||
                 !serviciosCliente.validarNIF(nif) ||
                 !serviciosCliente.validarTelefono(telefono)) {
+
+                System.out.println("Error: Algún dato no es válido.");
                 redirectAttributes.addFlashAttribute("error", "Datos inválidos, revise el formulario.");
                 return "redirect:/registroCliente";
             }
@@ -830,17 +848,23 @@ public class MainController {
             nuevoCliente = serviciosCliente.guardarCliente(nuevoCliente);
             credencialesRepository.save(credenciales);
 
+            System.out.println("Cliente registrado exitosamente.");
             redirectAttributes.addFlashAttribute("success", "Cliente registrado exitosamente.");
             return "redirect:/registroCliente";
 
         } catch (DataIntegrityViolationException e) {
+            System.out.println("Error de integridad de datos: " + e.getMessage());
             redirectAttributes.addFlashAttribute("error", "El email o usuario ya están en uso.");
             return "redirect:/registroCliente";
         } catch (Exception e) {
+            System.out.println("Error inesperado: " + e.getMessage());
             redirectAttributes.addFlashAttribute("error", "Error inesperado: " + e.getMessage());
             return "redirect:/registroCliente";
         }
     }
+
+
+
 
 
     @GetMapping("/registroCliente")
@@ -864,7 +888,6 @@ public class MainController {
         System.out.println("MÉTODO realizarPedido EJECUTADO");
 
         Sesion sesionActual = (Sesion) session.getAttribute("usuario");
-
         if (sesionActual == null || sesionActual.getPerfilusuarioAutenticado() != Perfil.CLIENTE) {
             System.out.println("ERROR: No hay una sesión activa o el usuario no es cliente.");
             redirectAttributes.addFlashAttribute("error", "Debes iniciar sesión como Cliente para realizar un pedido.");
@@ -875,7 +898,6 @@ public class MainController {
 
         String nombreUsuario = sesionActual.getUsuarioAutenticado();
         Persona persona = serviciosPersona.buscarPorNombreDeUsuario(nombreUsuario);
-
         if (persona == null) {
             redirectAttributes.addFlashAttribute("error", "No se encontró la información del usuario.");
             return "redirect:/menuCliente";
@@ -895,11 +917,13 @@ public class MainController {
         pedido = pedidoRepository.save(pedido);
         System.out.println("Pedido guardado con ID: " + pedido.getId());
 
-        for (String key : params.keySet()) {
-            if (key.startsWith("planta_")) {
-                String codigoPlanta = key.replace("planta_", "");
+        List<Ejemplar> ejemplaresSeleccionados = new ArrayList<>();
 
+        for (String key : params.keySet()) {
+            if (key.startsWith("cantidad_")) { 
+                String codigoPlanta = key.replace("cantidad_", ""); 
                 int cantidad;
+
                 try {
                     cantidad = Integer.parseInt(params.get(key));
                 } catch (NumberFormatException e) {
@@ -914,7 +938,7 @@ public class MainController {
 
                         List<Ejemplar> ejemplaresDisponibles = ejemplarRepository.findByPlantaCodigoOrderByNombreAsc(codigoPlanta)
                                 .stream()
-                                .filter(e -> e.getPedido() == null)
+                                .filter(e -> e.getPedido() == null) 
                                 .collect(Collectors.toList());
 
                         if (ejemplaresDisponibles.size() < cantidad) {
@@ -922,17 +946,18 @@ public class MainController {
                             return "redirect:/realizarPedido";
                         }
 
-                        System.out.println("Guardando ejemplares para el pedido ID: " + pedido.getId());
+                        System.out.println("Guardando " + cantidad + " ejemplares para el pedido ID: " + pedido.getId());
+
                         for (int i = 0; i < cantidad; i++) {
                             Ejemplar ejemplar = ejemplaresDisponibles.get(i);
-                            ejemplar.setPedido(pedido); 
-
+                            ejemplar.setPedido(pedido);
                             ejemplarRepository.save(ejemplar);
+                            ejemplaresSeleccionados.add(ejemplar);
 
-                            String contenidoMensaje = "Pedido del ejemplar " + ejemplar.getNombre() + " realizado.";
+                            String contenidoMensaje = "Pedido de la planta " + planta.getNombreComun() + " realizado.";
                             Mensaje mensaje = new Mensaje(LocalDateTime.now(), contenidoMensaje, persona, ejemplar);
                             mensajesRepository.save(mensaje);
-                            
+
                             System.out.println("Mensaje creado: " + contenidoMensaje);
                         }
                     }
@@ -940,9 +965,14 @@ public class MainController {
             }
         }
 
+        pedido.setEjemplares(new HashSet<>(ejemplaresSeleccionados));
+        pedidoRepository.save(pedido);
+
         redirectAttributes.addFlashAttribute("success", "Pedido realizado con éxito.");
         return "redirect:/menuCliente";
     }
+
+
     
     @GetMapping("/carrito")
     public String verCarrito(Model model, HttpSession session, RedirectAttributes redirectAttributes) {
@@ -1050,20 +1080,21 @@ public class MainController {
     }
 
     @GetMapping("/ejemplares/stock")
-    public String verStockEjemplares(@RequestParam(value = "codigoPlanta", required = false) String codigoPlanta, Model model) {
+    public String verStockEjemplares(@RequestParam(value = "codigoPlanta", required = false) String codigoPlanta, 
+                                     Model model, RedirectAttributes redirectAttributes) {
         List<Planta> plantas = plantaRepository.findAll();
         model.addAttribute("plantas", plantas);
 
         if (codigoPlanta == null || codigoPlanta.isEmpty()) {
-            model.addAttribute("error", "Seleccione una planta.");
-            return "stockEjemplares";
+            redirectAttributes.addFlashAttribute("errorSeleccion", "Debe seleccionar una planta antes de ver el stock.");
+            return "redirect:/stockEjemplares";
         }
 
         Optional<Planta> plantaOptional = plantaRepository.findByCodigo(codigoPlanta);
         
         if (plantaOptional.isEmpty()) {
-            model.addAttribute("error", "No se encontró la planta con código: " + codigoPlanta);
-            return "stockEjemplares"; 
+            redirectAttributes.addFlashAttribute("errorSeleccion", "No se encontró la planta con código: " + codigoPlanta);
+            return "redirect:/stockEjemplares"; 
         }
 
         Planta planta = plantaOptional.get();
@@ -1084,5 +1115,6 @@ public class MainController {
 
         return "stockEjemplares";
     }
+
     
 }

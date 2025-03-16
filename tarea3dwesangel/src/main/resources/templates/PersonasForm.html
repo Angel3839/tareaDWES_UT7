@@ -18,7 +18,7 @@
         }
 
         .navbar {
-            background-color: rgba(76, 175, 80, 0.9);
+            background-color: rgba(46, 87, 47, 0.9);
             justify-content: center;
         }
 
@@ -132,28 +132,31 @@
         <h1 class="text-center mb-4">Crear Nueva Persona</h1>
         
         <div class="form-container">
-            <form th:action="@{/personas/guardar}" method="post">
-                <div class="mb-3">
-                    <label for="nombre" class="form-label">Nombre</label>
-                    <input type="text" id="nombre" name="nombre" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label">Correo Electrónico</label>
-                    <input type="email" id="email" name="email" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label for="usuario" class="form-label">Nombre de Usuario</label>
-                    <input type="text" id="usuario" name="usuario" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Contraseña</label>
-                    <input type="password" id="password" name="password" class="form-control" required>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <button type="submit" class="btn btn-primary">Guardar</button>
-                    <a th:href="@{/personas}" class="btn btn-secondary">Cancelar</a>
-                </div>
-            </form>
+            <form th:action="@{/personas/guardar}" method="post" onsubmit="return validarFormulario();">
+			    <div class="mb-3">
+			        <label for="nombre" class="form-label">Nombre</label>
+			        <input type="text" id="nombre" name="nombre" class="form-control">
+			    </div>
+			    <div class="mb-3">
+			        <label for="email" class="form-label">Correo Electrónico</label>
+			        <input type="email" id="email" name="email" class="form-control">
+			    </div>
+			    <div class="mb-3">
+			        <label for="usuario" class="form-label">Nombre de Usuario</label>
+			        <input type="text" id="usuario" name="usuario" class="form-control">
+			    </div>
+			    <div class="mb-3">
+			        <label for="password" class="form-label">Contraseña</label>
+			        <input type="password" id="password" name="password" class="form-control">
+			    </div>
+			
+			    <p id="errorMsg" class="text-danger" style="display: none;">Debes completar al menos un campo antes de guardar.</p>
+			
+			    <div class="d-flex justify-content-between">
+			        <button type="submit" class="btn btn-primary">Guardar</button>
+			        <a href="/volverMenu" class="btn btn-secondary">Volver</a>
+			    </div>
+			</form>
 
             <div id="successAlert" class="alert-success mt-3">Persona guardada correctamente.</div>
 
@@ -211,6 +214,22 @@
             }
 
         };
+        
+        function validarFormulario() {
+            let nombre = document.getElementById("nombre").value.trim();
+            let email = document.getElementById("email").value.trim();
+            let usuario = document.getElementById("usuario").value.trim();
+            let password = document.getElementById("password").value.trim();
+            let errorMsg = document.getElementById("errorMsg");
+
+            if (nombre === "" && email === "" && usuario === "" && password === "") {
+                errorMsg.style.display = "block";
+                return false;
+            }
+
+            errorMsg.style.display = "none";
+            return true;
+        }
     </script>
 </body>
 </html>

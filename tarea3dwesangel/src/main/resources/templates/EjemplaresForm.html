@@ -19,7 +19,7 @@
         }
         
         .navbar {
-            background-color: rgba(76, 175, 80, 0.9);
+            background-color: rgba(46, 87, 47, 0.9);
             justify-content: center;
         }
         
@@ -36,15 +36,15 @@
         }
         
         .form-container, .table-container {
-    width: 50%;
-    max-width: 600px;
-    margin: 20px auto; /* Centra horizontalmente */
-    background-color: rgba(255, 255, 255, 0.2);
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    text-align: center;
-}
+		    width: 50%;
+		    max-width: 600px;
+		    margin: 20px auto;
+		    background-color: rgba(255, 255, 255, 0.2);
+		    padding: 20px;
+		    border-radius: 12px;
+		    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+		    text-align: center;
+		}
         
         
         .form-label {
@@ -117,21 +117,22 @@
         <h1 class="text-center mb-4">Crear Nuevo Ejemplar</h1>
         
         <div class="form-container">
-            <form th:action="@{/ejemplares/guardar}" method="post">
-                
-                <div class="mb-3">
-                    <label for="planta" class="form-label">Seleccionar Planta</label>
-                    <select id="planta" name="codigoPlanta" class="form-select" required>
-                        <option value="">Seleccione una planta</option>
-                        <option th:each="planta : ${plantas}" th:value="${planta.codigo}" th:text="${planta.nombreComun}"></option>
-                    </select>
-                </div>
-                
-                <div class="d-flex justify-content-between">
-                    <button type="submit" class="btn btn-primary">Guardar</button>
-                    <a href="/volverMenu" class="btn btn-secondary">Volver</a>
-                </div>
-            </form>
+            <form th:action="@{/ejemplares/guardar}" method="post" onsubmit="return validarSeleccion();">
+			    <div class="mb-3">
+			        <label for="planta" class="form-label">Seleccionar Planta</label>
+			        <select id="planta" name="codigoPlanta" class="form-select">
+			            <option value="">Seleccione una planta</option>
+			            <option th:each="planta : ${plantas}" th:value="${planta.codigo}" th:text="${planta.nombreComun}"></option>
+			        </select>
+			    </div>
+			
+			    <p id="errorSeleccion" class="text-danger" style="display: none;">Debes seleccionar una planta antes de guardar.</p>
+			
+			    <div class="d-flex justify-content-between">
+			        <button type="submit" class="btn btn-primary">Guardar</button>
+			        <a href="/volverMenu" class="btn btn-secondary">Volver</a>
+			    </div>
+			</form>
 
             <!-- Alerta de éxito -->
             <div id="successAlert" class="alert-success mt-3">Ejemplar guardado correctamente.</div>
@@ -161,23 +162,24 @@
 </div>
     
 <!-- Formulario para Filtrar Ejemplares por Planta -->
-<div class="form-container mt-4">
-    <h3 class="text-center mb-3">Filtrar Ejemplares por Planta</h3>
-    <form th:action="@{/ejemplares/filtrar}" method="get">
-        <div class="mb-3">
-            <label for="codigoPlantaFiltro" class="form-label">Seleccionar Plantas</label>
-            <select id="codigoPlantaFiltro" name="codigoPlantas" class="form-select" multiple required>
-                <option th:each="planta : ${plantas}" 
-                        th:value="${planta.codigo}" 
-                        th:text="${planta.codigo}">
-                </option>
-            </select>
+<div class="container">
+        <h1 class="text-center mb-4">Filtrar Ejemplares por Planta</h1>
+        <div class="form-container">
+            <form th:action="@{/ejemplares/filtrar}" method="get" onsubmit="return validarFiltroSeleccionado();">
+                <div class="mb-3">
+                    <label for="codigoPlantaFiltro" class="form-label">Seleccionar Plantas</label>
+                    <select id="codigoPlantaFiltro" name="codigoPlantas" class="form-select" multiple>
+                        <option th:each="planta : ${plantas}" 
+                                th:value="${planta.codigo}" 
+                                th:text="${planta.nombreComun}">
+                        </option>
+                    </select>
+                </div>
+                <p id="errorFiltroSeleccion" class="text-danger" style="display: none;">Debe seleccionar al menos una planta antes de filtrar.</p>
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+            </form>
         </div>
-        <div class="d-flex justify-content-between">
-            <button type="submit" class="btn btn-primary">Filtrar</button>
-        </div>
-    </form>
-</div>
+    </div>
 
 <!-- Lista Filtrada de Ejemplares -->
 <div class="table-container mt-4" th:if="${ejemplaresFiltrados != null and !ejemplaresFiltrados.isEmpty()}">
@@ -202,27 +204,30 @@
 
 
     
-    <!-- Formulario para Ver Mensajes Iniciales de Ejemplares -->
-<div class="form-container mt-4">
-    <h3 class="text-center mb-3">Ver Mensajes Iniciales por Ejemplar</h3>
-    <form th:action="@{/ejemplares/verMensajes}" method="get">
-        <div class="mb-3">
-            <label for="ejemplarSeleccionado" class="form-label">Seleccionar Ejemplar</label>
-            <select id="ejemplarSeleccionado" name="idEjemplar" class="form-select" required>
-                <option value="">Seleccione un ejemplar</option>
-                <option th:each="ejemplar : ${ejemplares}" 
-                        th:value="${ejemplar.id}" 
-                        th:text="${ejemplar.nombre}">
-                </option>
-            </select>
+    <!-- Formulario para Ver Mensajes de Ejemplares -->
+<div class="container">
+        <h1 class="text-center mb-4">Ver Mensajes por Ejemplar</h1>
+        <div class="form-container">
+            <form th:action="@{/ejemplares/verMensajes}" method="get" onsubmit="return validarEjemplarSeleccionado();">
+                <div class="mb-3">
+                    <label for="ejemplarSeleccionado" class="form-label">Seleccionar Ejemplar</label>
+                    <select id="ejemplarSeleccionado" name="idEjemplar" class="form-select">
+                        <option value="">Seleccione un ejemplar</option>
+                        <option th:each="ejemplar : ${ejemplares}" 
+                                th:value="${ejemplar.id}" 
+                                th:text="${ejemplar.nombre}">
+                        </option>
+                    </select>
+                </div>
+                <p id="errorEjemplarSeleccion" class="text-danger" style="display: none;">Debe seleccionar un ejemplar antes de ver los mensajes.</p>
+                <button type="submit" class="btn btn-primary">Ver Mensajes</button>
+            </form>
         </div>
-        <button type="submit" class="btn btn-primary">Ver Mensajes</button>
-    </form>
-</div>
+    </div>
 
 <!-- Lista de Mensajes Iniciales -->
 <div class="table-container mt-4" th:if="${mensajesIniciales != null}">
-    <h3 class="text-center mb-3">Mensajes Iniciales del Ejemplar</h3>
+    <h3 class="text-center mb-3">Mensajes del Ejemplar</h3>
     <table class="table table-hover">
         <thead>
             <tr>
@@ -272,6 +277,58 @@
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         };
+        
+        function validarSeleccion() {
+            let selectPlanta = document.getElementById("planta");
+            let errorMsg = document.getElementById("errorSeleccion");
+
+            if (selectPlanta.value === "") {
+                errorMsg.style.display = "block";
+                return false;
+            }
+
+            errorMsg.style.display = "none";
+            return true;
+        }
+        
+        function validarFiltro() {
+            let select = document.getElementById("codigoPlantaFiltro");
+            let errorMsg = document.getElementById("errorFiltro");
+
+            if (select.selectedOptions.length === 0) {
+                errorMsg.style.display = "block";
+                return false;
+            }
+
+            errorMsg.style.display = "none";
+            return true;
+        }
+        
+        function validarEjemplarSeleccionado() {
+            let selectEjemplar = document.getElementById("ejemplarSeleccionado");
+            let errorMsg = document.getElementById("errorEjemplarSeleccion");
+
+            if (selectEjemplar.value === "") {
+                errorMsg.style.display = "block";
+                return false;
+            }
+
+            errorMsg.style.display = "none";
+            return true;
+        }
+        
+        function validarFiltroSeleccionado() {
+            let selectPlantas = document.getElementById("codigoPlantaFiltro");
+            let errorMsg = document.getElementById("errorFiltroSeleccion");
+
+            if (selectPlantas.selectedOptions.length === 0) {
+                errorMsg.style.display = "block";
+                return false;
+            }
+
+            errorMsg.style.display = "none";
+            return true;
+        }
     </script>
 </body>
 </html>
