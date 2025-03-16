@@ -665,36 +665,25 @@ public class MainController {
     @GetMapping("/MensajesForm")
     public String gestionMensajes(Model model) {
         try {
-            LocalDateTime fechaInicio = LocalDateTime.of(1900, 1, 1, 0, 0);
-            LocalDateTime fechaFin = LocalDateTime.now();
-            List<Mensaje> mensajesPorFecha = serviciosMensaje.verMensajesRangoFechas(fechaInicio, fechaFin);
-
-            Set<Persona> personasUnicas = mensajesPorFecha.stream()
-                    .map(Mensaje::getPersona)
-                    .collect(Collectors.toSet());
-            List<Persona> personas = new ArrayList<>(personasUnicas);
-
-            Set<Ejemplar> ejemplaresUnicos = mensajesPorFecha.stream()
-                    .map(Mensaje::getEjemplar)
-                    .collect(Collectors.toSet());
-            List<Ejemplar> listaEjemplares = new ArrayList<>(ejemplaresUnicos);
-
-            Set<Planta> plantasUnicas = mensajesPorFecha.stream()
-                    .map(m -> m.getEjemplar().getPlanta())
-                    .collect(Collectors.toSet());
-            List<Planta> listaPlantas = new ArrayList<>(plantasUnicas);
-
-            model.addAttribute("mensajesPorFecha", mensajesPorFecha);
+            List<Persona> personas = personaRepository.findAll();
             model.addAttribute("personas", personas);
-            model.addAttribute("plantas", listaPlantas);
+
+            List<Mensaje> mensajes = mensajesRepository.findAll();
+            List<Ejemplar> listaEjemplares = ejemplarRepository.findAll();
+            List<Planta> listaPlantas = plantaRepository.findAll();
+
+            model.addAttribute("mensajes", mensajes);
             model.addAttribute("ejemplares", listaEjemplares);
+            model.addAttribute("plantas", listaPlantas);
 
         } catch (Exception e) {
             System.out.println("Error al cargar los mensajes: " + e.getMessage());
+            model.addAttribute("error", "Error al cargar los mensajes.");
         }
 
         return "MensajesForm";
     }
+
 
     
     @PostMapping("/personas/guardar")
@@ -981,14 +970,18 @@ public class MainController {
         Sesion sesionActual = (Sesion) session.getAttribute("usuario");
 
         if (sesionActual == null || sesionActual.getPerfilusuarioAutenticado() != Perfil.CLIENTE) {
-            System.out.println("ERROR: No hay una sesión activa o el usuario no es cliente.");
             redirectAttributes.addFlashAttribute("error", "Debes iniciar sesión como Cliente para ver el carrito.");
             return "redirect:/menuCliente";
         }
 
+        Boolean pedidoConfirmado = (Boolean) session.getAttribute("pedidoConfirmado");
+        if (pedidoConfirmado != null && pedidoConfirmado) {
+            model.addAttribute("mensaje", "Tu carrito está vacío.");
+            return "carrito";
+        }
+
         String nombreUsuario = sesionActual.getUsuarioAutenticado();
         Persona persona = serviciosPersona.buscarPorNombreDeUsuario(nombreUsuario);
-
         if (persona == null) {
             redirectAttributes.addFlashAttribute("error", "No se encontró la información del usuario.");
             return "redirect:/menuCliente";
@@ -1001,7 +994,6 @@ public class MainController {
         }
 
         Cliente cliente = clienteOptional.get();
-
         Optional<Pedido> pedidoOptional = pedidoRepository.findTopByClienteOrderByFechaDesc(cliente);
 
         if (pedidoOptional.isEmpty()) {
@@ -1023,8 +1015,6 @@ public class MainController {
         Optional<Pedido> pedidoOptional = pedidoRepository.findById(idPedido);
 
         if (pedidoOptional.isPresent()) {
-            Pedido pedido = pedidoOptional.get();
-            pedidoRepository.delete(pedido);
             session.removeAttribute("pedidoActual");
 
             redirectAttributes.addFlashAttribute("success", "Pedido confirmado con éxito.");
@@ -1034,7 +1024,6 @@ public class MainController {
             return "redirect:/carrito";
         }
     }
-
 
 
     @PostMapping("/eliminarPedido")

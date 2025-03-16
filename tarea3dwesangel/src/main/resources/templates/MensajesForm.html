@@ -18,7 +18,7 @@
         }
 
         .navbar {
-            background-color: rgba(76, 175, 80, 0.9);
+            background-color: rgba(46, 87, 47, 0.9);
             justify-content: center;
         }
 
@@ -238,9 +238,10 @@
     <div class="mb-3">
         <label for="personaFiltro" class="form-label">Seleccionar Persona</label>
         <select id="personaFiltro" name="idPersona" class="form-select">
-            <option value="">Seleccione una persona</option>
-            <option th:each="persona : ${personas}" th:value="${persona.id}" th:text="${persona.nombre}"></option>
-        </select>
+		    <option value="">Seleccione una persona</option>
+		    <option th:each="persona : ${personas}" th:value="${persona.id}" th:text="${persona.nombre}"></option>
+		</select>
+
     </div>
 
     <!-- Mensaje de error si no se selecciona una persona -->
