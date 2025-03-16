@@ -986,8 +986,6 @@ public class MainController {
             return "redirect:/menuCliente";
         }
 
-        System.out.println("Usuario autenticado en sesión: " + sesionActual.getUsuarioAutenticado());
-
         String nombreUsuario = sesionActual.getUsuarioAutenticado();
         Persona persona = serviciosPersona.buscarPorNombreDeUsuario(nombreUsuario);
 
@@ -1007,7 +1005,7 @@ public class MainController {
         Optional<Pedido> pedidoOptional = pedidoRepository.findTopByClienteOrderByFechaDesc(cliente);
 
         if (pedidoOptional.isEmpty()) {
-            model.addAttribute("mensaje", "No tienes pedidos en el carrito.");
+            model.addAttribute("mensaje", "Tu carrito está vacío.");
             return "carrito";
         }
 
@@ -1015,28 +1013,28 @@ public class MainController {
         model.addAttribute("pedido", pedido);
         model.addAttribute("ejemplares", pedido.getEjemplares());
 
-
         return "carrito";
     }
 
 
+
     @PostMapping("/confirmarPedido")
-    @ResponseBody
-    public String confirmarPedido(@RequestParam Long idPedido, HttpSession session) {
+    public String confirmarPedido(@RequestParam Long idPedido, HttpSession session, RedirectAttributes redirectAttributes) {
         Optional<Pedido> pedidoOptional = pedidoRepository.findById(idPedido);
 
         if (pedidoOptional.isPresent()) {
             Pedido pedido = pedidoOptional.get();
-            pedido.setFecha(LocalDate.now());
-            pedidoRepository.save(pedido);
-
+            pedidoRepository.delete(pedido);
             session.removeAttribute("pedidoActual");
 
-            return "Pedido realizado con éxito.";
+            redirectAttributes.addFlashAttribute("success", "Pedido confirmado con éxito.");
+            return "redirect:/carrito";
         } else {
-            return "Error: Pedido no encontrado.";
+            redirectAttributes.addFlashAttribute("error", "Error: Pedido no encontrado.");
+            return "redirect:/carrito";
         }
     }
+
 
 
     @PostMapping("/eliminarPedido")
