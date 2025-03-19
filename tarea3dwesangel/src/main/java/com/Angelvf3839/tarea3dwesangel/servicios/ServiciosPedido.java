@@ -47,6 +47,7 @@ public class ServiciosPedido {
         return pedido.orElse(null);
     }
 
+    /* Método para obtener todos los pedidos */
     public List<Pedido> obtenerTodosLosPedidos() {
         return pedidoRepository.findAll();
     }
@@ -84,6 +85,7 @@ public class ServiciosPedido {
         sesionesClientes.remove(clienteId);
     }
 
+    /*Método para limpiar la sesión expirada */
     private void limpiarSesionExpirada(Long clienteId) {
         LocalDateTime inicioSesion = sesionesClientes.get(clienteId);
         if (inicioSesion != null && LocalDateTime.now().isAfter(inicioSesion.plusHours(6))) {
@@ -104,6 +106,7 @@ public class ServiciosPedido {
         return detallesCarrito;
     }
 
+    /* Método para registrar un pedido*/
     public void registrarPedido(Cliente cliente, Map<Long, Integer> carrito) {
         Pedido pedido = new Pedido();
         pedido.setCliente(cliente);
@@ -130,7 +133,7 @@ public class ServiciosPedido {
         pedidoRepository.save(pedido);
     }
 
-
+    /* Método para validad la disponibildad de los ejemplares */
     public boolean validarDisponibilidadEjemplares(String codigoPlanta, int cantidadSeleccionada) {
         List<Ejemplar> ejemplaresDisponibles = ejemplarRepository.findByPlantaCodigoOrderByNombreAsc(codigoPlanta)
                 .stream()

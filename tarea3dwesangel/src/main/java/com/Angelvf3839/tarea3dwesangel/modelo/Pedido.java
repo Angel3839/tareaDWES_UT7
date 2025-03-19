@@ -35,7 +35,7 @@ public class Pedido implements Serializable{
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL)
     private Set<Ejemplar> ejemplares = new HashSet<Ejemplar>();
     
-    private boolean confirmado = false; // Nueva propiedad para controlar el estado del pedido
+    private boolean confirmado = false;
 
     public Pedido() {
     }
