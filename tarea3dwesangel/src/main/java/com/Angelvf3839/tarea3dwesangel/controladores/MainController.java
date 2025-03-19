@@ -878,12 +878,9 @@ public class MainController {
 
         Sesion sesionActual = (Sesion) session.getAttribute("usuario");
         if (sesionActual == null || sesionActual.getPerfilusuarioAutenticado() != Perfil.CLIENTE) {
-            System.out.println("ERROR: No hay una sesión activa o el usuario no es cliente.");
             redirectAttributes.addFlashAttribute("error", "Debes iniciar sesión como Cliente para realizar un pedido.");
             return "redirect:/menuCliente";
         }
-
-        System.out.println("Usuario autenticado en sesión: " + sesionActual.getUsuarioAutenticado());
 
         String nombreUsuario = sesionActual.getUsuarioAutenticado();
         Persona persona = serviciosPersona.buscarPorNombreDeUsuario(nombreUsuario);
@@ -899,18 +896,11 @@ public class MainController {
         }
 
         Cliente cliente = clienteOptional.get();
-
-        Pedido pedido = new Pedido();
-        pedido.setCliente(cliente);
-        pedido.setFecha(LocalDate.now());
-        pedido = pedidoRepository.save(pedido);
-        System.out.println("Pedido guardado con ID: " + pedido.getId());
-
         List<Ejemplar> ejemplaresSeleccionados = new ArrayList<>();
 
         for (String key : params.keySet()) {
-            if (key.startsWith("cantidad_")) { 
-                String codigoPlanta = key.replace("cantidad_", ""); 
+            if (key.startsWith("cantidad_")) {
+                String codigoPlanta = key.replace("cantidad_", "");
                 int cantidad;
 
                 try {
@@ -921,45 +911,51 @@ public class MainController {
                 }
 
                 if (cantidad > 0) {
-                    Optional<Planta> plantaOpt = plantaRepository.findByCodigo(codigoPlanta);
-                    if (plantaOpt.isPresent()) {
-                        Planta planta = plantaOpt.get();
+                    List<Ejemplar> ejemplaresDisponibles = ejemplarRepository.findByPlantaCodigoOrderByNombreAsc(codigoPlanta)
+                            .stream()
+                            .filter(e -> e.getPedido() == null)
+                            .collect(Collectors.toList());
 
-                        List<Ejemplar> ejemplaresDisponibles = ejemplarRepository.findByPlantaCodigoOrderByNombreAsc(codigoPlanta)
-                                .stream()
-                                .filter(e -> e.getPedido() == null) 
-                                .collect(Collectors.toList());
+                    if (ejemplaresDisponibles.size() < cantidad) {
+                        redirectAttributes.addFlashAttribute("errorEjemplares", "No hay suficientes ejemplares disponibles de la planta con código: " + codigoPlanta);
+                        return "redirect:/realizarPedido";
+                    }
 
-                        if (ejemplaresDisponibles.size() < cantidad) {
-                            redirectAttributes.addFlashAttribute("error", "No hay suficientes ejemplares disponibles de " + planta.getNombreComun());
-                            return "redirect:/realizarPedido";
-                        }
-
-                        System.out.println("Guardando " + cantidad + " ejemplares para el pedido ID: " + pedido.getId());
-
-                        for (int i = 0; i < cantidad; i++) {
-                            Ejemplar ejemplar = ejemplaresDisponibles.get(i);
-                            ejemplar.setPedido(pedido);
-                            ejemplarRepository.save(ejemplar);
-                            ejemplaresSeleccionados.add(ejemplar);
-
-                            String contenidoMensaje = "Pedido de la planta " + planta.getNombreComun() + " realizado.";
-                            Mensaje mensaje = new Mensaje(LocalDateTime.now(), contenidoMensaje, persona, ejemplar);
-                            mensajesRepository.save(mensaje);
-
-                            System.out.println("Mensaje creado: " + contenidoMensaje);
-                        }
+                    for (int i = 0; i < cantidad; i++) {
+                        Ejemplar ejemplar = ejemplaresDisponibles.get(i);
+                        ejemplaresSeleccionados.add(ejemplar);
                     }
                 }
             }
         }
 
+        if (ejemplaresSeleccionados.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorEjemplares", "No seleccionaste ejemplares válidos.");
+            return "redirect:/realizarPedido";
+        }
+
+        Pedido pedido = new Pedido();
+        pedido.setCliente(cliente);
+        pedido.setFecha(LocalDate.now());
         pedido.setEjemplares(new HashSet<>(ejemplaresSeleccionados));
         pedidoRepository.save(pedido);
 
+        for (Ejemplar ejemplar : ejemplaresSeleccionados) {
+            ejemplar.setPedido(pedido);
+            ejemplarRepository.save(ejemplar);
+
+            String contenidoMensaje = "Pedido de la planta " + ejemplar.getPlanta().getNombreComun() + " realizado.";
+            Mensaje mensaje = new Mensaje(LocalDateTime.now(), contenidoMensaje, persona, ejemplar);
+            mensajesRepository.save(mensaje);
+            System.out.println("Mensaje creado: " + contenidoMensaje);
+        }
+
+        System.out.println("Pedido guardado con ID: " + pedido.getId());
         redirectAttributes.addFlashAttribute("success", "Pedido realizado con éxito.");
         return "redirect:/menuCliente";
     }
+
+
 
 
     
@@ -974,12 +970,6 @@ public class MainController {
             return "redirect:/menuCliente";
         }
 
-        Boolean pedidoConfirmado = (Boolean) session.getAttribute("pedidoConfirmado");
-        if (pedidoConfirmado != null && pedidoConfirmado) {
-            model.addAttribute("mensaje", "Tu carrito está vacío.");
-            return "carrito";
-        }
-
         String nombreUsuario = sesionActual.getUsuarioAutenticado();
         Persona persona = serviciosPersona.buscarPorNombreDeUsuario(nombreUsuario);
         if (persona == null) {
@@ -994,7 +984,7 @@ public class MainController {
         }
 
         Cliente cliente = clienteOptional.get();
-        Optional<Pedido> pedidoOptional = pedidoRepository.findTopByClienteOrderByFechaDesc(cliente);
+        Optional<Pedido> pedidoOptional = pedidoRepository.findTopByClienteAndConfirmadoFalseOrderByFechaDesc(cliente);
 
         if (pedidoOptional.isEmpty()) {
             model.addAttribute("mensaje", "Tu carrito está vacío.");
@@ -1010,20 +1000,30 @@ public class MainController {
 
 
 
+
     @PostMapping("/confirmarPedido")
     public String confirmarPedido(@RequestParam Long idPedido, HttpSession session, RedirectAttributes redirectAttributes) {
         Optional<Pedido> pedidoOptional = pedidoRepository.findById(idPedido);
 
         if (pedidoOptional.isPresent()) {
-            session.removeAttribute("pedidoActual");
+            Pedido pedido = pedidoOptional.get();
+            
+            pedido.setConfirmado(true);
+            pedidoRepository.save(pedido);
+
+            session.removeAttribute("pedido");
 
             redirectAttributes.addFlashAttribute("success", "Pedido confirmado con éxito.");
-            return "redirect:/carrito";
         } else {
             redirectAttributes.addFlashAttribute("error", "Error: Pedido no encontrado.");
-            return "redirect:/carrito";
         }
+
+        return "redirect:/carrito";
     }
+
+
+
+
 
 
     @PostMapping("/eliminarPedido")

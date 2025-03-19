@@ -96,6 +96,21 @@
 		
         <div id="successAlert" class="alert-success">Pedido realizado con éxito.</div>
         <div id="errorAlert" class="alert-danger">Error al realizar el pedido.</div>
+        <!-- Mostrar error si no hay stock suficiente -->
+		<div th:if="${error}" class="alert alert-danger" style="color: red; text-align: center;">
+		    <p th:text="${error}"></p>
+		</div>
+		
+		<div th:if="${errorEjemplares}" class="alert alert-danger" style="color: red; text-align: center;">
+		    <p th:text="${errorEjemplares}"></p>
+		</div>
+		
+		<!-- Mensaje de error en rojo cuando no hay suficientes ejemplares disponibles -->
+		<div th:if="${errorEjemplares}" class="error-message">
+		    <p style="color: red; font-weight: bold;">[[${errorEjemplares}]]</p>
+		</div>
+
+        
 
         <div class="form-container">
             <form th:action="@{/realizarPedido}" method="post" onsubmit="return validarFormulario();">

@@ -12,4 +12,7 @@ import com.Angelvf3839.tarea3dwesangel.modelo.Pedido;
 public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 	
 	Optional<Pedido> findTopByClienteOrderByFechaDesc(Cliente cliente);
+	
+	Optional<Pedido> findTopByClienteAndConfirmadoFalseOrderByFechaDesc(Cliente cliente);
+
 }

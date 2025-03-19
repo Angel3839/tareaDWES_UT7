@@ -129,6 +129,17 @@ public class ServiciosPedido {
         pedido.setEjemplares(ejemplares);
         pedidoRepository.save(pedido);
     }
+
+
+    public boolean validarDisponibilidadEjemplares(String codigoPlanta, int cantidadSeleccionada) {
+        List<Ejemplar> ejemplaresDisponibles = ejemplarRepository.findByPlantaCodigoOrderByNombreAsc(codigoPlanta)
+                .stream()
+                .filter(e -> e.getPedido() == null) 
+                .collect(Collectors.toList());
+
+        return ejemplaresDisponibles.size() >= cantidadSeleccionada;
+    }
+
    
 
 
