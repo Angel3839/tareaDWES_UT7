@@ -60,7 +60,7 @@
             border-radius: 12px;
             text-align: center;
             margin-bottom: 20px;
-            display: none;
+
         }
         .alert-success {
             background-color: rgba(76, 175, 80, 0.9);
@@ -70,6 +70,8 @@
             background-color: rgba(244, 67, 54, 0.9);
             color: white;
         }
+        
+        
         .error-msg {
             color: #ff4d4d;
             font-size: 14px;
@@ -90,29 +92,23 @@
     <div class="container">
         <h1 class="text-center mb-4">Realizar Pedido</h1>
 
-		<div th:if="${errorEjemplares}" class="alert alert-danger">
-		    <p th:text="${errorEjemplares}"></p>
-		</div>
 		
-        <div id="successAlert" class="alert-success">Pedido realizado con éxito.</div>
-        <div id="errorAlert" class="alert-danger">Error al realizar el pedido.</div>
-
-		<div th:if="${error}" class="alert alert-danger" style="color: red; text-align: center;">
+		
+        <div th:if="${error}" class="alert alert-danger text-center" style="font-weight: bold;">
 		    <p th:text="${error}"></p>
 		</div>
 		
-		<div th:if="${errorEjemplares}" class="alert alert-danger" style="color: red; text-align: center;">
+		<div th:if="${errorEjemplares}" class="alert alert-danger text-center" style="font-weight: bold;">
 		    <p th:text="${errorEjemplares}"></p>
 		</div>
 		
-		<div th:if="${errorEjemplares}" class="error-message">
-		    <p style="color: red; font-weight: bold;">[[${errorEjemplares}]]</p>
+		<div th:if="${success}" class="alert alert-success text-center" style="font-weight: bold;">
+		    <p th:text="${success}"></p>
 		</div>
 
-        
 
         <div class="form-container">
-            <form th:action="@{/realizarPedido}" method="post" onsubmit="return validarFormulario();">
+            <form th:action="@{/realizarPedido}" method="post">
                 
                 <div class="mb-3">
                     <label class="form-label">Seleccionar Plantas</label>
@@ -123,10 +119,11 @@
                                    onchange="toggleCantidad(this)">
                             <label th:for="'planta_' + ${planta.codigo}" th:text="${planta.nombreComun}"></label>
                         </div>
-                        <input type="number" class="form-control w-25 ms-2"
-                               th:id="'cantidad_' + ${planta.codigo}"
-                               th:name="'cantidad_' + ${planta.codigo}"
-                               min="1" placeholder="Cantidad" disabled>
+                        <input type="text" class="form-control w-25 ms-2"
+					       th:id="'cantidad_' + ${planta.codigo}"
+					       th:name="'cantidad_' + ${planta.codigo}"
+					       placeholder="Cantidad" disabled>
+                        
                     </div>
                 </div>
                 
@@ -177,7 +174,7 @@
             let cantidadInput = document.getElementById("cantidad_" + checkbox.id.split("_")[1]);
             if (checkbox.checked) {
                 cantidadInput.disabled = false;
-                cantidadInput.required = true;
+                cantidadInput.required = false;
             } else {
                 cantidadInput.disabled = true;
                 cantidadInput.required = false;

@@ -19,7 +19,7 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 
     @Query("SELECT c FROM Cliente c WHERE c.persona.id = :idPersona")
     Optional<Cliente> findByIdPersona(@Param("idPersona") Long idPersona);
-
-
+    
+    Optional<Cliente> findByNif(String nif);
 
 }

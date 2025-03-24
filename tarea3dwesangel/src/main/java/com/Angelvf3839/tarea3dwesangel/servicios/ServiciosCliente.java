@@ -39,6 +39,11 @@ public class ServiciosCliente {
         return clienteRepository.existsByNif(nif);
     }
     
+    public Optional<Cliente> buscarClientePorNif(String nif) {
+        return clienteRepository.findByNif(nif);
+    }
+
+    
     public boolean esCliente(Long idUsuario) {
         Optional<Cliente> cliente = clienteRepository.findByIdPersona(idUsuario);
         return cliente.isPresent();

@@ -1,5 +1,6 @@
 package com.Angelvf3839.tarea3dwesangel.repositorios;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,6 +14,8 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 	
 	Optional<Pedido> findTopByClienteOrderByFechaDesc(Cliente cliente);
 	
-	Optional<Pedido> findTopByClienteAndConfirmadoFalseOrderByFechaDesc(Cliente cliente);
+//	Optional<Pedido> findTopByClienteAndConfirmadoFalseOrderByFechaDesc(Cliente cliente);
+
+	List<Pedido> findAllByClienteOrderByFechaDesc(Cliente cliente);
 
 }

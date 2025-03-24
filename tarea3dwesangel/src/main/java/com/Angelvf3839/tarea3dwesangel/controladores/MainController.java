@@ -47,6 +47,7 @@ import com.Angelvf3839.tarea3dwesangel.servicios.ServiciosPedido;
 import com.Angelvf3839.tarea3dwesangel.servicios.ServiciosPersona;
 import com.Angelvf3839.tarea3dwesangel.servicios.ServiciosPlanta;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -756,7 +757,6 @@ public class MainController {
     	return "PersonasForm";
     }
     
-   
 
     @PostMapping("/clientes/registrar")
     public String registrarCliente(@RequestParam(required = false) String nombre,
@@ -769,8 +769,6 @@ public class MainController {
                                    @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fechanac,
                                    RedirectAttributes redirectAttributes) {
         try {
-            System.out.println("Intentando registrar cliente...");
-
             if ((nombre == null || nombre.isBlank()) || 
                 (email == null || email.isBlank()) ||
                 (usuario == null || usuario.isBlank()) ||
@@ -790,10 +788,28 @@ public class MainController {
                 redirectAttributes.addFlashAttribute("error", "El email ya está registrado.");
                 return "redirect:/registroCliente";
             }
+            
+            if (!serviciosCliente.validarFechaNacimiento(fechanac)) {
+                System.out.println("Error: Fecha de nacimiento no válida.");
+                redirectAttributes.addFlashAttribute("error", "La fecha de nacimiento no es válida. No puede ser futura.");
+                return "redirect:/registroCliente";
+            }
 
             if (credencialesRepository.findByUsuario(usuario).isPresent()) {
                 System.out.println("Error: El usuario ya está registrado.");
                 redirectAttributes.addFlashAttribute("error", "El usuario ya está registrado.");
+                return "redirect:/registroCliente";
+            }
+
+            if (serviciosCliente.buscarClientePorNif(nif).isPresent()) {
+                System.out.println("Error: El NIF ya está registrado.");
+                redirectAttributes.addFlashAttribute("error", "El NIF ya está registrado.");
+                return "redirect:/registroCliente";
+            }
+            
+            if (!serviciosCliente.validarTelefono(telefono)) {
+                System.out.println("Error: Teléfono no válido.");
+                redirectAttributes.addFlashAttribute("error", "El número de teléfono no es válido. Debe contener 9 dígitos.");
                 return "redirect:/registroCliente";
             }
 
@@ -843,7 +859,11 @@ public class MainController {
 
         } catch (DataIntegrityViolationException e) {
             System.out.println("Error de integridad de datos: " + e.getMessage());
-            redirectAttributes.addFlashAttribute("error", "El email o usuario ya están en uso.");
+            if (e.getMessage().contains("nif")) {
+                redirectAttributes.addFlashAttribute("error", "El NIF ya está registrado.");
+            } else {
+                redirectAttributes.addFlashAttribute("error", "El email o usuario ya están en uso.");
+            }
             return "redirect:/registroCliente";
         } catch (Exception e) {
             System.out.println("Error inesperado: " + e.getMessage());
@@ -851,8 +871,6 @@ public class MainController {
             return "redirect:/registroCliente";
         }
     }
-
-
 
 
 
@@ -897,14 +915,21 @@ public class MainController {
 
         Cliente cliente = clienteOptional.get();
         List<Ejemplar> ejemplaresSeleccionados = new ArrayList<>();
+        boolean algunaPlantaSeleccionadaSinCantidad = false;
 
         for (String key : params.keySet()) {
             if (key.startsWith("cantidad_")) {
                 String codigoPlanta = key.replace("cantidad_", "");
-                int cantidad;
+                String valor = params.get(key);
 
+                if (valor == null || valor.trim().isEmpty()) {
+                    algunaPlantaSeleccionadaSinCantidad = true;
+                    continue;
+                }
+
+                int cantidad;
                 try {
-                    cantidad = Integer.parseInt(params.get(key));
+                    cantidad = Integer.parseInt(valor.trim());
                 } catch (NumberFormatException e) {
                     redirectAttributes.addFlashAttribute("error", "Cantidad inválida para la planta con código: " + codigoPlanta);
                     return "redirect:/realizarPedido";
@@ -922,11 +947,15 @@ public class MainController {
                     }
 
                     for (int i = 0; i < cantidad; i++) {
-                        Ejemplar ejemplar = ejemplaresDisponibles.get(i);
-                        ejemplaresSeleccionados.add(ejemplar);
+                        ejemplaresSeleccionados.add(ejemplaresDisponibles.get(i));
                     }
                 }
             }
+        }
+
+        if (algunaPlantaSeleccionadaSinCantidad) {
+            redirectAttributes.addFlashAttribute("error", "Has seleccionado una planta sin introducir la cantidad.");
+            return "redirect:/realizarPedido";
         }
 
         if (ejemplaresSeleccionados.isEmpty()) {
@@ -934,33 +963,20 @@ public class MainController {
             return "redirect:/realizarPedido";
         }
 
-        Pedido pedido = new Pedido();
-        pedido.setCliente(cliente);
-        pedido.setFecha(LocalDate.now());
-        pedido.setEjemplares(new HashSet<>(ejemplaresSeleccionados));
-        pedidoRepository.save(pedido);
+        Pedido pedidoTemporal = new Pedido();
+        pedidoTemporal.setCliente(cliente);
+        pedidoTemporal.setFecha(LocalDate.now());
+        pedidoTemporal.setEjemplares(new HashSet<>(ejemplaresSeleccionados));
 
-        for (Ejemplar ejemplar : ejemplaresSeleccionados) {
-            ejemplar.setPedido(pedido);
-            ejemplarRepository.save(ejemplar);
+        session.setAttribute("carritoTemporal", pedidoTemporal);
 
-            String contenidoMensaje = "Pedido de la planta " + ejemplar.getPlanta().getNombreComun() + " realizado.";
-            Mensaje mensaje = new Mensaje(LocalDateTime.now(), contenidoMensaje, persona, ejemplar);
-            mensajesRepository.save(mensaje);
-            System.out.println("Mensaje creado: " + contenidoMensaje);
-        }
-
-        System.out.println("Pedido guardado con ID: " + pedido.getId());
-        redirectAttributes.addFlashAttribute("success", "Pedido realizado con éxito.");
-        return "redirect:/menuCliente";
+        redirectAttributes.addFlashAttribute("success", "Pedido añadido al carrito.");
+        return "redirect:/carrito";
     }
-
-
-
 
     
     @GetMapping("/carrito")
-    public String verCarrito(Model model, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String verCarrito(Model model, HttpSession session, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         System.out.println("MÉTODO verCarrito EJECUTADO");
 
         Sesion sesionActual = (Sesion) session.getAttribute("usuario");
@@ -983,63 +999,78 @@ public class MainController {
             return "redirect:/menuCliente";
         }
 
-        Cliente cliente = clienteOptional.get();
-        Optional<Pedido> pedidoOptional = pedidoRepository.findTopByClienteAndConfirmadoFalseOrderByFechaDesc(cliente);
+        Pedido pedido = (Pedido) session.getAttribute("carritoTemporal");
 
-        if (pedidoOptional.isEmpty()) {
+        if (pedido == null || pedido.getEjemplares() == null || pedido.getEjemplares().isEmpty()) {
             model.addAttribute("mensaje", "Tu carrito está vacío.");
             return "carrito";
         }
 
-        Pedido pedido = pedidoOptional.get();
         model.addAttribute("pedido", pedido);
+        model.addAttribute("carritoTemporalExiste", request.getSession().getAttribute("carritoTemporal") != null);
         model.addAttribute("ejemplares", pedido.getEjemplares());
 
         return "carrito";
     }
 
 
-
-
     @PostMapping("/confirmarPedido")
-    public String confirmarPedido(@RequestParam Long idPedido, HttpSession session, RedirectAttributes redirectAttributes) {
-        Optional<Pedido> pedidoOptional = pedidoRepository.findById(idPedido);
+    public String confirmarPedido(HttpSession session, RedirectAttributes redirectAttributes) {
+        System.out.println("MÉTODO confirmarPedido EJECUTADO");
 
-        if (pedidoOptional.isPresent()) {
-            Pedido pedido = pedidoOptional.get();
-            
-            pedido.setConfirmado(true);
-            pedidoRepository.save(pedido);
-
-            session.removeAttribute("pedido");
-
-            redirectAttributes.addFlashAttribute("success", "Pedido confirmado con éxito.");
-        } else {
-            redirectAttributes.addFlashAttribute("error", "Error: Pedido no encontrado.");
+        Sesion sesionActual = (Sesion) session.getAttribute("usuario");
+        if (sesionActual == null || sesionActual.getPerfilusuarioAutenticado() != Perfil.CLIENTE) {
+            redirectAttributes.addFlashAttribute("error", "Debes iniciar sesión como Cliente para confirmar el pedido.");
+            return "redirect:/menuCliente";
         }
 
+        Pedido pedido = (Pedido) session.getAttribute("carritoTemporal");
+        if (pedido == null || pedido.getEjemplares() == null || pedido.getEjemplares().isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "No hay pedido en el carrito para confirmar.");
+            return "redirect:/carrito";
+        }
+
+        Pedido pedidoGuardado = pedidoRepository.save(pedido);
+
+        Set<Ejemplar> ejemplares = new HashSet<>(pedido.getEjemplares());
+
+        for (Ejemplar ejemplar : ejemplares) {
+            ejemplar.setPedido(pedidoGuardado);
+            ejemplarRepository.saveAndFlush(ejemplar);
+        }
+
+        Persona persona = serviciosPersona.buscarPorNombreDeUsuario(sesionActual.getUsuarioAutenticado());
+        for (Ejemplar ejemplar : ejemplares) {
+            String contenidoMensaje = "Pedido de la planta " + ejemplar.getPlanta().getNombreComun() + " realizado.";
+            Mensaje mensaje = new Mensaje(LocalDateTime.now(), contenidoMensaje, persona, ejemplar);
+            mensajesRepository.save(mensaje);
+        }
+
+
+        session.removeAttribute("carritoTemporal");
+        redirectAttributes.addFlashAttribute("success", "Pedido confirmado correctamente.");
         return "redirect:/carrito";
     }
-
-
-
-
 
 
     @PostMapping("/eliminarPedido")
-    public String eliminarPedido(@RequestParam Long idPedido, RedirectAttributes redirectAttributes) {
-        Optional<Pedido> pedidoOptional = pedidoRepository.findById(idPedido);
-        
-        if (pedidoOptional.isPresent()) {
-            Pedido pedido = pedidoOptional.get();
-            pedidoRepository.delete(pedido);
-            redirectAttributes.addFlashAttribute("success", "Pedido eliminado correctamente.");
+    public String eliminarPedido(HttpSession session, RedirectAttributes redirectAttributes) {
+        Pedido pedido = (Pedido) session.getAttribute("carritoTemporal");
+
+        if (pedido != null) {
+            for (Ejemplar ejemplar : pedido.getEjemplares()) {
+                ejemplar.setPedido(null);
+            }
+
+            session.removeAttribute("carritoTemporal");
+            redirectAttributes.addFlashAttribute("success", "Pedido eliminado correctamente del carrito.");
         } else {
-            redirectAttributes.addFlashAttribute("error", "Pedido no encontrado.");
+            redirectAttributes.addFlashAttribute("error", "No hay pedido en el carrito para eliminar.");
         }
 
         return "redirect:/carrito";
     }
+
 
     @GetMapping("/filtrarEjemplaresDisponibles")
     @ResponseBody
