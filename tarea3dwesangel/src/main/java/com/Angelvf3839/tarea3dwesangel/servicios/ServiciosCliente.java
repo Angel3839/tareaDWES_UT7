@@ -82,6 +82,10 @@ public class ServiciosCliente {
         public boolean validarTelefono(String telefono) {
             return telefono != null && Pattern.matches("^\\d{9}$", telefono);
         }
+        
+        public boolean telefonoYaRegistrado(String telefono) {
+            return clienteRepository.existsByTelefono(telefono);
+        }
 
         public boolean validarUsuario(String usuario) {
             return usuario != null && usuario.length() >= 4 && !usuario.contains(" ");

@@ -37,6 +37,9 @@ public class Ejemplar implements Serializable {
     @JoinColumn(name = "pedido_id", nullable = true)
     private Pedido pedido;
 
+    @Column(nullable = false)
+    private boolean disponible = true;
+
     @OneToMany(mappedBy = "ejemplar", cascade = CascadeType.ALL)
     private List<Mensaje> mensajes = new LinkedList<>();
 
@@ -80,6 +83,14 @@ public class Ejemplar implements Serializable {
         this.pedido = pedido;
     }
 
+    public boolean isDisponible() {
+        return disponible;
+    }
+
+    public void setDisponible(boolean disponible) {
+        this.disponible = disponible;
+    }
+
     public List<Mensaje> getMensajes() {
         return mensajes;
     }
@@ -112,6 +123,7 @@ public class Ejemplar implements Serializable {
 
     @Override
     public String toString() {
-        return "Ejemplar [id=" + id + ", nombre=" + nombre + ", planta=" + planta + ", pedido=" + pedido + "]";
+        return "Ejemplar [id=" + id + ", nombre=" + nombre + ", planta=" + planta + ", pedido=" + pedido
+                + ", disponible=" + disponible + "]";
     }
 }

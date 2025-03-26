@@ -21,5 +21,7 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
     Optional<Cliente> findByIdPersona(@Param("idPersona") Long idPersona);
     
     Optional<Cliente> findByNif(String nif);
+    
+    boolean existsByTelefono(String telefono);
 
 }

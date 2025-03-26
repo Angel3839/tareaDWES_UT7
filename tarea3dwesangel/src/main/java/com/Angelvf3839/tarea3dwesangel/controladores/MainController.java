@@ -812,6 +812,24 @@ public class MainController {
                 redirectAttributes.addFlashAttribute("error", "El número de teléfono no es válido. Debe contener 9 dígitos.");
                 return "redirect:/registroCliente";
             }
+            
+            if (serviciosCliente.telefonoYaRegistrado(telefono)) {
+                System.out.println("Error: El teléfono ya está registrado.");
+                redirectAttributes.addFlashAttribute("error", "El número de teléfono ya está registrado.");
+                return "redirect:/registroCliente";
+            }
+            
+            if (!serviciosCliente.validarUsuario(usuario)) {
+                System.out.println("Error: Usuario no válido.");
+                redirectAttributes.addFlashAttribute("error", "Usuario no válido. Debe contener al menos 4 letras y no tener espacios en blanco.");
+                return "redirect:/registroCliente";
+            }
+            
+            if (!serviciosCliente.validarContraseña(password)) {
+                System.out.println("Error: Contraseña no válida.");
+                redirectAttributes.addFlashAttribute("error", "Contraseña no válida. Debe contener al menos 6 carácteres.");
+                return "redirect:/registroCliente";
+            }
 
             if (!serviciosCliente.validarNombre(nombre) ||
                 !serviciosCliente.validarEmail(email) ||
@@ -938,7 +956,7 @@ public class MainController {
                 if (cantidad > 0) {
                     List<Ejemplar> ejemplaresDisponibles = ejemplarRepository.findByPlantaCodigoOrderByNombreAsc(codigoPlanta)
                             .stream()
-                            .filter(e -> e.getPedido() == null)
+                            .filter(e -> e.getPedido() == null && e.isDisponible())
                             .collect(Collectors.toList());
 
                     if (ejemplaresDisponibles.size() < cantidad) {
@@ -1036,6 +1054,7 @@ public class MainController {
 
         for (Ejemplar ejemplar : ejemplares) {
             ejemplar.setPedido(pedidoGuardado);
+            ejemplar.setDisponible(false);
             ejemplarRepository.saveAndFlush(ejemplar);
         }
 
@@ -1058,9 +1077,10 @@ public class MainController {
         Pedido pedido = (Pedido) session.getAttribute("carritoTemporal");
 
         if (pedido != null) {
-            for (Ejemplar ejemplar : pedido.getEjemplares()) {
-                ejemplar.setPedido(null);
-            }
+        	for (Ejemplar ejemplar : pedido.getEjemplares()) {
+        	    ejemplar.setPedido(null);
+        	    ejemplar.setDisponible(true);
+        	}
 
             session.removeAttribute("carritoTemporal");
             redirectAttributes.addFlashAttribute("success", "Pedido eliminado correctamente del carrito.");
