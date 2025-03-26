@@ -205,12 +205,16 @@ public class MainController {
 
 
     @GetMapping("/filtrarPorPlanta")
-    public String filtrarMensajesPorPlanta(@RequestParam(value = "codigoPlanta", required = false) String codigoPlanta, Model model) {
-        List<Mensaje> mensajesFiltradosPorPlanta = new ArrayList<>();
+    public String filtrarMensajesPorPlanta(@RequestParam(value = "codigoPlanta", required = false) String codigoPlanta,
+                                           Model model,
+                                           RedirectAttributes redirectAttributes) {
 
-        if (codigoPlanta != null && !codigoPlanta.isEmpty()) {
-            mensajesFiltradosPorPlanta = mensajesRepository.buscarMensajesPorCodigoPlanta(codigoPlanta);
+        if (codigoPlanta == null || codigoPlanta.trim().isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorSeleccionPlanta", "Debe seleccionar una planta antes de filtrar.");
+            return "redirect:/MensajesForm";
         }
+
+        List<Mensaje> mensajesFiltradosPorPlanta = mensajesRepository.buscarMensajesPorCodigoPlanta(codigoPlanta);
 
         List<Mensaje> todosMensajes = mensajesRepository.findAll();
         List<Planta> listaPlantas = plantaRepository.findAll();
@@ -229,37 +233,39 @@ public class MainController {
 
     @GetMapping("/filtrarPorRangoFechas")
     public String filtrarMensajesPorRangoFechas(
-            @RequestParam("fechaInicio") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fechaInicio,
-            @RequestParam("fechaFin") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fechaFin,
+            @RequestParam(value = "fechaInicio", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fechaInicio,
+            @RequestParam(value = "fechaFin", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fechaFin,
+            RedirectAttributes redirectAttributes,
             Model model) {
-        
+
+        if (fechaInicio == null || fechaFin == null) {
+            redirectAttributes.addFlashAttribute("errorSeleccionFechas", "Debe seleccionar ambas fechas antes de filtrar.");
+            return "redirect:/MensajesForm";
+        }
+
         try {
             LocalDateTime fechaInicioLDT = fechaInicio.atStartOfDay();
             LocalDateTime fechaFinLDT = fechaFin.atTime(23, 59, 59);
 
             List<Mensaje> mensajesFiltradosPorFecha = mensajesRepository.findMensajesBetweenFechas(fechaInicioLDT, fechaFinLDT);
 
-            if (mensajesFiltradosPorFecha.isEmpty()) {
-                model.addAttribute("error", "No hay mensajes en el rango de fechas seleccionado.");
-            } else {
-                model.addAttribute("mensajesFiltradosPorFecha", mensajesFiltradosPorFecha);
-            }
-
+            model.addAttribute("mensajesFiltradosPorFecha", mensajesFiltradosPorFecha);
             model.addAttribute("personas", personaRepository.findAll());
             model.addAttribute("plantas", plantaRepository.findAll());
             model.addAttribute("ejemplares", ejemplarRepository.findAll());
 
+            return "MensajesForm";
         } catch (Exception e) {
-            model.addAttribute("error", "Error al procesar las fechas.");
+            redirectAttributes.addFlashAttribute("errorSeleccionFechas", "Error al procesar las fechas.");
+            return "redirect:/MensajesForm";
         }
-
-        return "MensajesForm";
     }
+
 
     @GetMapping("/ejemplares/verMensajes")
     public String verMensajesIniciales(@RequestParam(value = "idEjemplar", required = false) Long idEjemplar, Model model, RedirectAttributes redirectAttributes) {
         if (idEjemplar == null) {
-            redirectAttributes.addFlashAttribute("errorSeleccion", "Debe seleccionar un ejemplar antes de ver los mensajes.");
+            redirectAttributes.addFlashAttribute("errorSeleccionEjemplar", "Debe seleccionar un ejemplar antes de ver los mensajes.");
             return "redirect:/EjemplaresForm";
         }
 
@@ -272,7 +278,7 @@ public class MainController {
             System.out.println("Mensajes encontrados: " + mensajesIniciales.size()); 
             model.addAttribute("mensajesIniciales", mensajesIniciales);
         } else {
-            model.addAttribute("errorSeleccion", "No se encontró el ejemplar seleccionado.");
+            model.addAttribute("errorSeleccionEjemplar", "No se encontró el ejemplar seleccionado.");
         }
 
         List<Ejemplar> listaEjemplares = ejemplarRepository.findAll();
@@ -440,7 +446,7 @@ public class MainController {
         mensajesRepository.save(mensajeInicial);
 
         System.out.println("Mensaje inicial creado correctamente.");
-        redirectAttributes.addFlashAttribute("success", "Ejemplar y mensaje inicial guardados con éxito.");
+        redirectAttributes.addFlashAttribute("success", "Ejemplar guardado correctamente.");
         return "redirect:/EjemplaresForm?success=true";
     }
 
@@ -455,7 +461,7 @@ public class MainController {
             RedirectAttributes redirectAttributes) {
         
         if (codigosPlantas == null || codigosPlantas.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorSeleccion", "Debe seleccionar al menos una planta antes de filtrar.");
+            redirectAttributes.addFlashAttribute("errorSeleccionPlanta", "Debe seleccionar al menos una planta antes de filtrar.");
             return "redirect:/EjemplaresForm";
         }
 
@@ -543,72 +549,79 @@ public class MainController {
                                        @RequestParam("nuevoNombreComun") String nuevoNombreComun, 
                                        RedirectAttributes redirectAttributes) {
         try {
-            Planta plantaSeleccionada = serviciosPlanta.buscarPorCodigo(codigo.trim());
-
-            if (plantaSeleccionada == null) {
-                redirectAttributes.addFlashAttribute("error", "No existe una planta con ese código.");
-                return "redirect:/plantas";
+            if (codigo == null || codigo.trim().isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorNombreComun", "Debe seleccionar una planta antes de actualizar el nombre común.");
+                return "redirect:/PlantasForm";
             }
 
             if (nuevoNombreComun == null || nuevoNombreComun.trim().isEmpty()) {
-                redirectAttributes.addFlashAttribute("error", "El nombre común no puede estar vacío.");
-                return "redirect:/plantas";
+                redirectAttributes.addFlashAttribute("errorNombreComun", "El nombre común no puede estar vacío.");
+                return "redirect:/PlantasForm";
+            }
+
+            Planta plantaSeleccionada = serviciosPlanta.buscarPorCodigo(codigo.trim());
+            if (plantaSeleccionada == null) {
+                redirectAttributes.addFlashAttribute("errorNombreComun", "No existe una planta con ese código.");
+                return "redirect:/PlantasForm";
             }
 
             boolean actualizado = serviciosPlanta.actualizarNombreComun(codigo.trim(), nuevoNombreComun.trim());
 
             if (actualizado) {
-                redirectAttributes.addFlashAttribute("success", "Nombre común actualizado con éxito a: " + nuevoNombreComun);
+                redirectAttributes.addFlashAttribute("successComun", "Nombre común actualizado con éxito a: " + nuevoNombreComun);
             } else {
-                redirectAttributes.addFlashAttribute("error", "Error: No se pudo actualizar el nombre común.");
+                redirectAttributes.addFlashAttribute("errorNombreComun", "Error: No se pudo actualizar el nombre común.");
             }
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error al modificar el nombre común: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorNombreComun", "Error al modificar el nombre común: " + e.getMessage());
         }
 
         return "redirect:/PlantasForm";
     }
 
+
     @PostMapping("/plantas/modificarNombreCientifico")
     public String modificarNombreCientifico(@RequestParam("codigo") String codigo, 
-                                           @RequestParam("nuevoNombreCientifico") String nuevoNombreCientifico, 
-                                           RedirectAttributes redirectAttributes) {
+                                            @RequestParam("nuevoNombreCientifico") String nuevoNombreCientifico, 
+                                            RedirectAttributes redirectAttributes) {
         try {
-            Planta plantaSeleccionada = serviciosPlanta.buscarPorCodigo(codigo.trim());
-
-            if (plantaSeleccionada == null) {
-                redirectAttributes.addFlashAttribute("error", "No existe una planta con ese código.");
+            if (codigo == null || codigo.trim().isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorNombreCientifico", "Debe seleccionar una planta antes de actualizar el nombre científico.");
                 return "redirect:/PlantasForm";
             }
 
             if (nuevoNombreCientifico == null || nuevoNombreCientifico.trim().isEmpty()) {
-                redirectAttributes.addFlashAttribute("error", "El nombre científico no puede estar vacío.");
+                redirectAttributes.addFlashAttribute("errorNombreCientifico", "El nombre científico no puede estar vacío.");
+                return "redirect:/PlantasForm";
+            }
+
+            Planta plantaSeleccionada = serviciosPlanta.buscarPorCodigo(codigo.trim());
+            if (plantaSeleccionada == null) {
+                redirectAttributes.addFlashAttribute("errorNombreCientifico", "No existe una planta con ese código.");
                 return "redirect:/PlantasForm";
             }
 
             boolean actualizado = serviciosPlanta.actualizarNombreCientifico(codigo.trim(), nuevoNombreCientifico.trim());
 
             if (actualizado) {
-                redirectAttributes.addFlashAttribute("success", "Nombre científico actualizado con éxito a: " + nuevoNombreCientifico);
+                redirectAttributes.addFlashAttribute("successCientifico", "Nombre científico actualizado con éxito a: " + nuevoNombreCientifico);
             } else {
-                redirectAttributes.addFlashAttribute("error", "Error: No se pudo actualizar el nombre científico.");
+                redirectAttributes.addFlashAttribute("errorNombreCientifico", "Error: No se pudo actualizar el nombre científico.");
             }
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error al modificar el nombre científico: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorNombreCientifico", "Error al modificar el nombre científico: " + e.getMessage());
         }
 
         return "redirect:/PlantasForm";
     }
 
     
-    
-    
-
     @PostMapping("/mensajes/guardar")
-    public String guardarMensaje(@RequestParam("idEjemplar") Long idEjemplar, 
-                                 @RequestParam("mensajeTexto") String mensajeTexto,
-                                 HttpSession session,
-                                 RedirectAttributes redirectAttributes) {
+    public String guardarMensaje(@RequestParam(value = "idEjemplar", required = false) Long idEjemplar,
+            @RequestParam("mensajeTexto") String mensajeTexto,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+    	
         System.out.println("MÉTODO guardarMensaje EJECUTADO");
 
         Sesion sesionActual = (Sesion) session.getAttribute("usuario");
@@ -616,6 +629,11 @@ public class MainController {
         if (sesionActual == null) {
             System.out.println("ERROR: No hay una sesión activa.");
             redirectAttributes.addFlashAttribute("error", "Debes iniciar sesión para enviar un mensaje.");
+            return "redirect:/MensajesForm";
+        }
+        
+        if (idEjemplar == null) {
+            redirectAttributes.addFlashAttribute("errorSeleccionEjemplar", "Debe seleccionar un ejemplar antes de guardar el mensaje.");
             return "redirect:/MensajesForm";
         }
 
@@ -720,7 +738,7 @@ public class MainController {
             }
 
             if (!serviciosCredenciales.validarContraseña(password)) {
-                redirectAttributes.addFlashAttribute("error", "La contraseña no cumple con los requisitos mínimos.");
+                redirectAttributes.addFlashAttribute("error", "La contraseña no cumple con los requisitos mínimos. Debe tener al menos 8 carácteres y un punto.");
                 return "redirect:/PersonasForm?error=true";
             }
 
@@ -819,9 +837,21 @@ public class MainController {
                 return "redirect:/registroCliente";
             }
             
+            if (!direccion.matches("^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑºª,\\.\\-/ ]{3,100}$")) {
+                System.out.println("Error: Dirección no válida.");
+                redirectAttributes.addFlashAttribute("error", "La dirección contiene caracteres no válidos.");
+                return "redirect:/registroCliente";
+            }
+            
             if (!serviciosCliente.validarUsuario(usuario)) {
                 System.out.println("Error: Usuario no válido.");
                 redirectAttributes.addFlashAttribute("error", "Usuario no válido. Debe contener al menos 4 letras y no tener espacios en blanco.");
+                return "redirect:/registroCliente";
+            }
+            
+            if (!serviciosCliente.validarEmail(email)) {
+                System.out.println("Error: Email no válido.");
+                redirectAttributes.addFlashAttribute("error", "Formato de Email no válido.");
                 return "redirect:/registroCliente";
             }
             
@@ -831,6 +861,12 @@ public class MainController {
                 return "redirect:/registroCliente";
             }
 
+            if (!serviciosCliente.validarNIF(nif)) {
+                System.out.println("Error: NIF no válido.");
+                redirectAttributes.addFlashAttribute("error", "Formato de NIF no válido.");
+                return "redirect:/registroCliente";
+            }
+            
             if (!serviciosCliente.validarNombre(nombre) ||
                 !serviciosCliente.validarEmail(email) ||
                 !serviciosCliente.validarUsuario(usuario) ||
@@ -940,14 +976,27 @@ public class MainController {
                 String codigoPlanta = key.replace("cantidad_", "");
                 String valor = params.get(key);
 
-                if (valor == null || valor.trim().isEmpty()) {
+                String plantaCheckbox = params.get("planta_" + codigoPlanta);
+                boolean plantaSeleccionada = plantaCheckbox != null;
+
+                if (plantaSeleccionada && (valor == null || valor.trim().isEmpty())) {
                     algunaPlantaSeleccionadaSinCantidad = true;
+                    continue;
+                }
+
+                if (!plantaSeleccionada) {
                     continue;
                 }
 
                 int cantidad;
                 try {
                     cantidad = Integer.parseInt(valor.trim());
+
+                    if (cantidad <= 0) {
+                        redirectAttributes.addFlashAttribute("error", "La cantidad debe ser un número positivo para la planta con código: " + codigoPlanta);
+                        return "redirect:/realizarPedido";
+                    }
+
                 } catch (NumberFormatException e) {
                     redirectAttributes.addFlashAttribute("error", "Cantidad inválida para la planta con código: " + codigoPlanta);
                     return "redirect:/realizarPedido";

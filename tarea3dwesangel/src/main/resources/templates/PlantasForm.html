@@ -112,7 +112,7 @@
 
         <div class="form-container">
             <h3 class="text-center mb-3">Agregar Nueva Planta</h3>
-            <form th:action="@{/plantas/guardar}" method="post" onsubmit="return validarFormulario();">
+            <form th:action="@{/plantas/guardar}" method="post">
 			    <div class="mb-3">
 			        <label for="codigo" class="form-label">Código</label>
 			        <input type="text" id="codigo" name="codigo" class="form-control">
@@ -160,7 +160,7 @@
 
         <div class="form-container mt-4">
             <h3 class="text-center mb-3">Modificar Nombre Común</h3>
-            <form th:action="@{/plantas/modificarNombre}" method="post" onsubmit="return validarModificacion('codigoPlanta', 'nuevoNombreComun', 'errorMsgComun');">
+            <form th:action="@{/plantas/modificarNombre}" method="post">
                 <div class="mb-3">
                     <label for="codigoPlanta" class="form-label">Seleccionar Planta</label>
                     <select id="codigoPlanta" name="codigo" class="form-select">
@@ -173,13 +173,16 @@
                     <input type="text" id="nuevoNombreComun" name="nuevoNombreComun" class="form-control">
                 </div>
                 <p id="errorMsgComun" class="text-danger" style="display: none;">⚠️ Debes seleccionar una planta y escribir un nuevo nombre común.</p>
+				<p th:if="${errorNombreComun}" class="text-danger text-center" th:text="${errorNombreComun}"></p>
+				<p th:if="${successComun}" class="text-success text-center" th:text="${success}"></p>
+                
                 <button type="submit" class="btn btn-warning">Actualizar</button>
             </form>
         </div>
         
 		<div class="form-container mt-4">
 		    <h3 class="text-center mb-3">Modificar Nombre Científico</h3>
-		    <form th:action="@{/plantas/modificarNombreCientifico}" method="post" onsubmit="return validarModificacion('codigoPlantaCientifico', 'nuevoNombreCientifico', 'errorMsgCientifico');">
+		    <form th:action="@{/plantas/modificarNombreCientifico}" method="post">
                 <div class="mb-3">
                     <label for="codigoPlantaCientifico" class="form-label">Seleccionar Planta</label>
                     <select id="codigoPlantaCientifico" name="codigo" class="form-select">
@@ -192,6 +195,9 @@
                     <input type="text" id="nuevoNombreCientifico" name="nuevoNombreCientifico" class="form-control">
                 </div>
                 <p id="errorMsgCientifico" class="text-danger" style="display: none;">⚠️ Debes seleccionar una planta y escribir un nuevo nombre científico.</p>
+				<p th:if="${errorNombreCientifico}" class="text-danger text-center" th:text="${errorNombreCientifico}"></p>
+				<p th:if="${successCientifico}" class="text-success text-center" th:text="${success}"></p>
+                
                 <button type="submit" class="btn btn-warning">Actualizar</button>
             </form>
 		</div>
@@ -225,34 +231,6 @@
         }
     };
     
-    function validarFormulario() {
-        let codigo = document.getElementById("codigo").value.trim();
-        let nombreComun = document.getElementById("nombreComun").value.trim();
-        let nombreCientifico = document.getElementById("nombreCientifico").value.trim();
-        let errorMsg = document.getElementById("errorMsg");
-
-        if (codigo === "" && nombreComun === "" && nombreCientifico === "") {
-            errorMsg.style.display = "block";
-            return false;
-        }
-
-        errorMsg.style.display = "none";
-        return true;
-    }
-    
-    function validarModificacion(selectId, inputId, errorId) {
-        let selectPlanta = document.getElementById(selectId).value.trim();
-        let nuevoNombre = document.getElementById(inputId).value.trim();
-        let errorMsg = document.getElementById(errorId);
-        
-        if (selectPlanta === "" || nuevoNombre === "") {
-            errorMsg.style.display = "block";
-            return false;
-        }
-        
-        errorMsg.style.display = "none";
-        return true;
-    }
     </script>
 </body>
 </html>

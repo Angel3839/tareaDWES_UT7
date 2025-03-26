@@ -34,7 +34,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; /* Centrar verticalmente */
+    justify-content: center;
 }
 
 .content-box {
@@ -125,12 +125,15 @@ footer {
     <h1 class="text-center mb-4">Gestión de Stock de Ejemplares</h1>
 
     <div class="content-box">
-        <form th:action="@{/ejemplares/stock}" method="get" onsubmit="return validarSeleccionPlanta();">
+        <form th:action="@{/ejemplares/stock}" method="get">
             <label for="codigoPlanta" class="form-label">Selecciona una planta:</label>
             <select name="codigoPlanta" id="codigoPlanta" class="form-select">
                 <option value="">-- Selecciona una planta --</option>
                 <option th:each="planta : ${plantas}" th:value="${planta.codigo}" th:text="${planta.nombreComun}"></option>
             </select>
+            <div th:if="${errorSeleccion}" class="alert alert-danger text-center">
+		        <p th:text="${errorSeleccion}"></p>
+		    </div>
             <p id="errorSeleccionPlanta" class="text-danger" style="display: none;">Debe seleccionar una planta antes de ver el stock.</p>
             <button type="submit" class="btn btn-primary mt-2 w-100">Ver Stock</button>
         </form>
@@ -138,10 +141,6 @@ footer {
 
     <div class="spacer"></div>
 
-    <!-- Mensaje de error cuando no se selecciona una planta -->
-    <div th:if="${errorSeleccion}" class="alert alert-danger text-center">
-        <p th:text="${errorSeleccion}"></p>
-    </div>
 
     <div class="table-container">
         <div th:if="${planta != null}" class="content-box">
@@ -198,21 +197,6 @@ footer {
     <p>&copy; 2025 Vivero de Ángel. Todos los derechos reservados.</p>
 </footer>
 
-<script>
-    function validarSeleccionPlanta() {
-        let selectPlanta = document.getElementById("codigoPlanta");
-        let errorMsg = document.getElementById("errorSeleccionPlanta");
-
-        if (selectPlanta.value === "") {
-            errorMsg.style.display = "block";
-            return false;
-        }
-
-        errorMsg.style.display = "none";
-        return true;
-    }
-</script>
-    
     
 </body>
 </html>

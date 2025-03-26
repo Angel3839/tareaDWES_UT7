@@ -117,7 +117,7 @@
         <h1 class="text-center mb-4">Crear Nuevo Ejemplar</h1>
         
         <div class="form-container">
-            <form th:action="@{/ejemplares/guardar}" method="post" onsubmit="return validarSeleccion();">
+            <form th:action="@{/ejemplares/guardar}" method="post">
 			    <div class="mb-3">
 			        <label for="planta" class="form-label">Seleccionar Planta</label>
 			        <select id="planta" name="codigoPlanta" class="form-select">
@@ -126,18 +126,17 @@
 			        </select>
 			    </div>
 			
-			    <p id="errorSeleccion" class="text-danger" style="display: none;">Debes seleccionar una planta antes de guardar.</p>
+				<p th:if="${error != null}" class="text-danger" th:text="${error}"></p>
 			
 			    <div class="d-flex justify-content-between">
 			        <button type="submit" class="btn btn-primary">Guardar</button>
 			        <a href="/volverMenu" class="btn btn-secondary">Volver</a>
 			    </div>
 			</form>
-
+			
             <!-- Alerta de éxito -->
             <div id="successAlert" class="alert-success mt-3">Ejemplar guardado correctamente.</div>
-            <!-- Alerta de error -->
-            <div id="errorAlert" class="alert-error mt-3">Error al guardar el ejemplar.</div>
+
         </div>
     </div>
 
@@ -165,7 +164,7 @@
 <div class="container">
         <h1 class="text-center mb-4">Filtrar Ejemplares por Planta</h1>
         <div class="form-container">
-            <form th:action="@{/ejemplares/filtrar}" method="get" onsubmit="return validarFiltroSeleccionado();">
+            <form th:action="@{/ejemplares/filtrar}" method="get">
                 <div class="mb-3">
                     <label for="codigoPlantaFiltro" class="form-label">Seleccionar Plantas</label>
                     <select id="codigoPlantaFiltro" name="codigoPlantas" class="form-select" multiple>
@@ -176,6 +175,7 @@
                     </select>
                 </div>
                 <p id="errorFiltroSeleccion" class="text-danger" style="display: none;">Debe seleccionar al menos una planta antes de filtrar.</p>
+				<p th:if="${errorSeleccionPlanta}" th:text="${errorSeleccionPlanta}" class="text-danger text-center"></p>
                 <button type="submit" class="btn btn-primary">Filtrar</button>
             </form>
         </div>
@@ -208,7 +208,7 @@
 <div class="container">
         <h1 class="text-center mb-4">Ver Mensajes por Ejemplar</h1>
         <div class="form-container">
-            <form th:action="@{/ejemplares/verMensajes}" method="get" onsubmit="return validarEjemplarSeleccionado();">
+            <form th:action="@{/ejemplares/verMensajes}" method="get">
                 <div class="mb-3">
                     <label for="ejemplarSeleccionado" class="form-label">Seleccionar Ejemplar</label>
                     <select id="ejemplarSeleccionado" name="idEjemplar" class="form-select">
@@ -219,13 +219,15 @@
                         </option>
                     </select>
                 </div>
+				<p th:if="${errorSeleccionEjemplar}" th:text="${errorSeleccionEjemplar}" class="text-danger text-center"></p>
+                         
                 <p id="errorEjemplarSeleccion" class="text-danger" style="display: none;">Debe seleccionar un ejemplar antes de ver los mensajes.</p>
                 <button type="submit" class="btn btn-primary">Ver Mensajes</button>
             </form>
         </div>
     </div>
 
-<!-- Lista de Mensajes Iniciales -->
+<!-- Lista de Mensajes -->
 <div class="table-container mt-4" th:if="${mensajesIniciales != null}">
     <h3 class="text-center mb-3">Mensajes del Ejemplar</h3>
     <table class="table table-hover">
@@ -234,7 +236,7 @@
                 <th>Fecha</th>
                 <th>Mensaje</th>
                 <th>Registrado por</th>
-                <th>Ejemplar</th> <!-- Nueva columna -->
+                <th>Ejemplar</th> 
             </tr>
         </thead>
         <tbody>
@@ -242,7 +244,7 @@
                 <td th:text="${#temporals.format(mensaje.fechaHora, 'dd-MM-yyyy HH:mm')}"></td>
                 <td th:text="${mensaje.mensaje}"></td>
                 <td th:text="${mensaje.persona.nombre}"></td>
-                <td th:text="${mensaje.ejemplar.nombre}"></td> <!-- Mostrar el nombre del ejemplar -->
+                <td th:text="${mensaje.ejemplar.nombre}"></td>
             </tr>
         </tbody>
     </table>
@@ -256,79 +258,26 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- JavaScript para mostrar alerta de éxito o error -->
-    <script>
-        window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('success')) {
-                const successAlert = document.getElementById('successAlert');
-                successAlert.style.display = 'block';
-                setTimeout(() => {
-                    successAlert.style.display = 'none';
-                }, 3000);
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-            if (urlParams.has('error')) {
-                const errorAlert = document.getElementById('errorAlert');
-                errorAlert.style.display = 'block';
-                setTimeout(() => {
-                    errorAlert.style.display = 'none';
-                }, 3000);
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-        };
-        
-        function validarSeleccion() {
-            let selectPlanta = document.getElementById("planta");
-            let errorMsg = document.getElementById("errorSeleccion");
-
-            if (selectPlanta.value === "") {
-                errorMsg.style.display = "block";
-                return false;
-            }
-
-            errorMsg.style.display = "none";
-            return true;
+	<script>
+	window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('success')) {
+            const successAlert = document.getElementById('successAlert');
+            successAlert.style.display = 'block';
+            setTimeout(() => {
+                successAlert.style.display = 'none';
+            }, 3000);
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
-        
-        function validarFiltro() {
-            let select = document.getElementById("codigoPlantaFiltro");
-            let errorMsg = document.getElementById("errorFiltro");
-
-            if (select.selectedOptions.length === 0) {
-                errorMsg.style.display = "block";
-                return false;
-            }
-
-            errorMsg.style.display = "none";
-            return true;
+        if (urlParams.has('error')) {
+            const errorAlert = document.getElementById('errorAlert');
+            errorAlert.style.display = 'block';
+            setTimeout(() => {
+                errorAlert.style.display = 'none';
+            }, 3000);
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
-        
-        function validarEjemplarSeleccionado() {
-            let selectEjemplar = document.getElementById("ejemplarSeleccionado");
-            let errorMsg = document.getElementById("errorEjemplarSeleccion");
-
-            if (selectEjemplar.value === "") {
-                errorMsg.style.display = "block";
-                return false;
-            }
-
-            errorMsg.style.display = "none";
-            return true;
-        }
-        
-        function validarFiltroSeleccionado() {
-            let selectPlantas = document.getElementById("codigoPlantaFiltro");
-            let errorMsg = document.getElementById("errorFiltroSeleccion");
-
-            if (selectPlantas.selectedOptions.length === 0) {
-                errorMsg.style.display = "block";
-                return false;
-            }
-
-            errorMsg.style.display = "none";
-            return true;
-        }
-    </script>
+    };
+	</script>
 </body>
 </html>

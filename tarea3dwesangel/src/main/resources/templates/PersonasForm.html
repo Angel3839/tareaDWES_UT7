@@ -132,14 +132,14 @@
         <h1 class="text-center mb-4">Crear Nueva Persona</h1>
         
         <div class="form-container">
-            <form th:action="@{/personas/guardar}" method="post" onsubmit="return validarFormulario();">
+            <form th:action="@{/personas/guardar}" method="post">
 			    <div class="mb-3">
 			        <label for="nombre" class="form-label">Nombre</label>
 			        <input type="text" id="nombre" name="nombre" class="form-control">
 			    </div>
 			    <div class="mb-3">
 			        <label for="email" class="form-label">Correo Electrónico</label>
-			        <input type="email" id="email" name="email" class="form-control">
+			        <input type="text" id="email" name="email" class="form-control">
 			    </div>
 			    <div class="mb-3">
 			        <label for="usuario" class="form-label">Nombre de Usuario</label>
@@ -159,8 +159,9 @@
 			</form>
 
             <div id="successAlert" class="alert-success mt-3">Persona guardada correctamente.</div>
+            
+            <p th:if="${error}" class="alert alert-danger text-center" th:text="${error}"></p>
 
-            <div id="errorAlert" class="alert-error mt-3">Error al guardar persona.</div>
         </div>
     </div>
 
@@ -215,21 +216,6 @@
 
         };
         
-        function validarFormulario() {
-            let nombre = document.getElementById("nombre").value.trim();
-            let email = document.getElementById("email").value.trim();
-            let usuario = document.getElementById("usuario").value.trim();
-            let password = document.getElementById("password").value.trim();
-            let errorMsg = document.getElementById("errorMsg");
-
-            if (nombre === "" && email === "" && usuario === "" && password === "") {
-                errorMsg.style.display = "block";
-                return false;
-            }
-
-            errorMsg.style.display = "none";
-            return true;
-        }
     </script>
 </body>
 </html>

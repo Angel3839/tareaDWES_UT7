@@ -115,14 +115,14 @@
                     <div th:each="planta : ${plantas}" class="d-flex align-items-center justify-content-between mb-2">
                         <div>
                             <input type="checkbox" th:id="'planta_' + ${planta.codigo}" 
-                                   th:name="'planta_' + ${planta.codigo}" th:value="1" 
-                                   onchange="toggleCantidad(this)">
+						       th:name="'planta_' + ${planta.codigo}" 
+						       th:value="1">
                             <label th:for="'planta_' + ${planta.codigo}" th:text="${planta.nombreComun}"></label>
                         </div>
                         <input type="text" class="form-control w-25 ms-2"
 					       th:id="'cantidad_' + ${planta.codigo}"
 					       th:name="'cantidad_' + ${planta.codigo}"
-					       placeholder="Cantidad" disabled>
+					       placeholder="Cantidad">
                         
                     </div>
                 </div>
@@ -169,72 +169,37 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
-        function toggleCantidad(checkbox) {
-            let cantidadInput = document.getElementById("cantidad_" + checkbox.id.split("_")[1]);
-            if (checkbox.checked) {
-                cantidadInput.disabled = false;
-                cantidadInput.required = false;
-            } else {
-                cantidadInput.disabled = true;
-                cantidadInput.required = false;
-                cantidadInput.value = ""; 
-            }
+	<script>
+	function cargarEjemplaresDisponibles() {
+        let codigoPlanta = document.getElementById("plantaSelector").value;
+        let tablaEjemplares = document.getElementById("tablaEjemplares");
+
+        if (!codigoPlanta) {
+            tablaEjemplares.innerHTML = '<tr><td colspan="2" class="text-center">Selecciona una planta para ver los ejemplares disponibles</td></tr>';
+            return;
         }
 
-        function validarFormulario() {
-            let checkboxes = document.querySelectorAll("input[type='checkbox']");
-            let alMenosUnoSeleccionado = false;
-            let errorMsg = document.getElementById("errorMsg");
-
-            checkboxes.forEach(checkbox => {
-                if (checkbox.checked) {
-                    let cantidadInput = document.getElementById("cantidad_" + checkbox.id.split("_")[1]);
-                    if (cantidadInput.value !== "" && cantidadInput.value > 0) {
-                        alMenosUnoSeleccionado = true;
-                    }
+        fetch(`/filtrarEjemplaresDisponibles?codigoPlanta=${codigoPlanta}`)
+            .then(response => response.json())
+            .then(data => {
+                tablaEjemplares.innerHTML = "";
+                if (data.length > 0) {
+                    data.forEach(ejemplar => {
+                        let row = `<tr>
+                            <td>${ejemplar.nombre}</td>
+                            <td>${ejemplar.codigoPlanta}</td>
+                        </tr>`;
+                        tablaEjemplares.innerHTML += row;
+                    });
+                } else {
+                    tablaEjemplares.innerHTML = '<tr><td colspan="2" class="text-center">No hay ejemplares disponibles</td></tr>';
                 }
+            })
+            .catch(error => {
+                console.error("Error al cargar los ejemplares:", error);
+                tablaEjemplares.innerHTML = '<tr><td colspan="2" class="text-center">Error al obtener los datos</td></tr>';
             });
-
-            if (!alMenosUnoSeleccionado) {
-                errorMsg.style.display = "block";
-                return false;
-            }
-
-            errorMsg.style.display = "none";
-            return true;
-        }
-        
-        function cargarEjemplaresDisponibles() {
-            let codigoPlanta = document.getElementById("plantaSelector").value;
-            let tablaEjemplares = document.getElementById("tablaEjemplares");
-
-            if (!codigoPlanta) {
-                tablaEjemplares.innerHTML = '<tr><td colspan="2" class="text-center">Selecciona una planta para ver los ejemplares disponibles</td></tr>';
-                return;
-            }
-
-            fetch(`/filtrarEjemplaresDisponibles?codigoPlanta=${codigoPlanta}`)
-                .then(response => response.json())
-                .then(data => {
-                    tablaEjemplares.innerHTML = "";
-                    if (data.length > 0) {
-                        data.forEach(ejemplar => {
-                            let row = `<tr>
-                                <td>${ejemplar.nombre}</td>
-                                <td>${ejemplar.codigoPlanta}</td>
-                            </tr>`;
-                            tablaEjemplares.innerHTML += row;
-                        });
-                    } else {
-                        tablaEjemplares.innerHTML = '<tr><td colspan="2" class="text-center">No hay ejemplares disponibles</td></tr>';
-                    }
-                })
-                .catch(error => {
-                    console.error("Error al cargar los ejemplares:", error);
-                    tablaEjemplares.innerHTML = '<tr><td colspan="2" class="text-center">Error al obtener los datos</td></tr>';
-                });
-        }
-    </script>
+    }
+	</script>
 </body>
 </html>
